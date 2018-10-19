@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 )
 
 type Item int
@@ -162,6 +163,7 @@ func FPGrowth(tree *FPTree, itemset []Item, minCount int) []ItemSetWithCount {
 
 func main() {
 
+	log.Println("Association Rule Mining - in Go")
 	const minSupport = 0.05
 
 	file, err := os.Open("datasets/kosarak.csv")
@@ -174,7 +176,8 @@ func main() {
 
 	itemizer := NewItemizer()
 
-	// First pass, count Item frequencies.
+	log.Println("First pass, counting Item frequencies.")
+	start := time.Now()
 	scanner := bufio.NewScanner(file)
 	numTransactions := 0
 	for scanner.Scan() {
@@ -188,10 +191,12 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("First pass took %s", time.Since(start))
 
 	minCount := int(math.Floor(minSupport * float64(numTransactions)))
 
-	// Second pass, build initial tree.
+	log.Println("Second pass, building initial tree..")
+	start = time.Now()
 	file.Seek(0, 0)
 	scanner = bufio.NewScanner(file)
 	tree := NewTree()
@@ -221,9 +226,13 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("Building initial tree took %s", time.Since(start))
 
-	// Generate frequent itemsets.
+	log.Println("Generating frequent itemsets via FPGrowth")
+	start = time.Now()
 	itemsWithCount := FPGrowth(tree, make([]Item, 0), minCount)
+	log.Printf("FPGrowth generated %d frequent patterns in %s",
+		len(itemsWithCount), time.Since(start))
 
 	// Print out frequent itemsets.
 	for _, itemWithCount := range itemsWithCount {
