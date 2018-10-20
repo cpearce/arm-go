@@ -25,38 +25,41 @@ import (
 	"time"
 )
 
+// Item represents an item.
 type Item int
 
+// Itemizer converts between a string to an Item type, and vice versa.
 type Itemizer struct {
 	strToItem map[string]Item
 	itemToStr map[Item]string
 	numItems  int
 }
 
-func (self *Itemizer) Itemize(values []string) []Item {
+// Itemize converts a slice of strings to a slice of Items.
+func (it *Itemizer) Itemize(values []string) []Item {
 	items := make([]Item, 0)
 	for _, val := range values {
 		val = strings.TrimSpace(val)
 		if len(val) == 0 {
 			continue
 		}
-		itemId, found := self.strToItem[val]
+		itemID, found := it.strToItem[val]
 		if !found {
-			self.numItems++
-			itemId = Item(self.numItems)
-			self.strToItem[val] = itemId
-			self.itemToStr[itemId] = val
+			it.numItems++
+			itemID = Item(it.numItems)
+			it.strToItem[val] = itemID
+			it.itemToStr[itemID] = val
 		}
-		items = append(items, itemId)
+		items = append(items, itemID)
 	}
 	return items
 }
 
-func (self *Itemizer) cmp(a Item, b Item) bool {
-	return self.itemToStr[a] < self.itemToStr[b]
+func (it *Itemizer) cmp(a Item, b Item) bool {
+	return it.itemToStr[a] < it.itemToStr[b]
 }
 
-func NewItemizer() Itemizer {
+func newItemizer() Itemizer {
 	return Itemizer{
 		strToItem: make(map[string]Item),
 		itemToStr: make(map[Item]string),
@@ -64,7 +67,7 @@ func NewItemizer() Itemizer {
 	}
 }
 
-func Filter(vs []Item, f func(Item) bool) []Item {
+func filter(vs []Item, f func(Item) bool) []Item {
 	vsf := make([]Item, 0)
 	for _, v := range vs {
 		if f(v) {
@@ -74,58 +77,58 @@ func Filter(vs []Item, f func(Item) bool) []Item {
 	return vsf
 }
 
-type ItemToNodeSlice map[Item][]*FPNode
-type ItemToNode map[Item]*FPNode
+type itemToNodeSlice map[Item][]*fpNode
+type itemToNode map[Item]*fpNode
 
-type FPNode struct {
+type fpNode struct {
 	item     Item
 	count    int
-	parent   *FPNode
-	children ItemToNode
+	parent   *fpNode
+	children itemToNode
 }
 
-type FPTree struct {
-	root     *FPNode
-	itemList ItemToNodeSlice
+type fpTree struct {
+	root     *fpNode
+	itemList itemToNodeSlice
 	counts   map[Item]int
 }
 
-const InvalidItem = Item(0)
+const invalidItem = Item(0)
 
-func NewNode(item Item, parent *FPNode) *FPNode {
-	return &FPNode{
+func newNode(item Item, parent *fpNode) *fpNode {
+	return &fpNode{
 		item:     item,
 		count:    0,
 		parent:   parent,
-		children: make(ItemToNode),
+		children: make(itemToNode),
 	}
 }
 
-func NewTree() *FPTree {
-	return &FPTree{
-		root:     NewNode(InvalidItem, nil),
-		itemList: make(ItemToNodeSlice),
+func newTree() *fpTree {
+	return &fpTree{
+		root:     newNode(invalidItem, nil),
+		itemList: make(itemToNodeSlice),
 		counts:   make(map[Item]int),
 	}
 }
 
-func (self *FPTree) Insert(transaction []Item, count int) {
-	self.root.count += count
-	parent := self.root
+func (tree *fpTree) Insert(transaction []Item, count int) {
+	tree.root.count += count
+	parent := tree.root
 	for _, item := range transaction {
 		node, found := parent.children[item]
 		if !found {
-			node = NewNode(item, parent)
+			node = newNode(item, parent)
 			parent.children[item] = node
-			self.itemList[item] = append(self.itemList[item], node)
+			tree.itemList[item] = append(tree.itemList[item], node)
 		}
-		self.counts[item] += count
+		tree.counts[item] += count
 		node.count += count
 		parent = node
 	}
 }
 
-type ItemSetWithCount struct {
+type itemSetWithCount struct {
 	itemset []Item
 	count   int
 }
@@ -137,11 +140,11 @@ func reverse(a []Item) {
 	}
 }
 
-func isRoot(node *FPNode) bool {
-	return node == nil || node.item == InvalidItem
+func isRoot(node *fpNode) bool {
+	return node == nil || node.item == invalidItem
 }
 
-func pathFromRootToExcluding(node *FPNode) []Item {
+func pathFromRootToExcluding(node *fpNode) []Item {
 	path := make([]Item, 0)
 	for {
 		node = node.parent
@@ -153,23 +156,23 @@ func pathFromRootToExcluding(node *FPNode) []Item {
 	}
 }
 
-func FPGrowth(tree *FPTree, itemset []Item, minCount int) []ItemSetWithCount {
-	itemsets := make([]ItemSetWithCount, 0)
+func fpGrowth(tree *fpTree, itemset []Item, minCount int) []itemSetWithCount {
+	itemsets := make([]itemSetWithCount, 0)
 	for item, itemList := range tree.itemList {
 		if tree.counts[item] < minCount {
 			continue
 		}
-		conditionalTree := NewTree()
+		conditionalTree := newTree()
 		for _, leaf := range itemList {
 			transaction := pathFromRootToExcluding(leaf)
 			conditionalTree.Insert(transaction, leaf.count)
 		}
 		path := append(itemset, item)
-		itemsets = append(itemsets, ItemSetWithCount{
+		itemsets = append(itemsets, itemSetWithCount{
 			itemset: path,
 			count:   conditionalTree.root.count,
 		})
-		x := FPGrowth(conditionalTree, path, minCount)
+		x := fpGrowth(conditionalTree, path, minCount)
 		itemsets = append(itemsets, x...)
 	}
 	return itemsets
@@ -188,7 +191,7 @@ func main() {
 
 	frequency := make(map[Item]int)
 
-	itemizer := NewItemizer()
+	itemizer := newItemizer()
 
 	log.Println("First pass, counting Item frequencies.")
 	start := time.Now()
@@ -213,13 +216,13 @@ func main() {
 	start = time.Now()
 	file.Seek(0, 0)
 	scanner = bufio.NewScanner(file)
-	tree := NewTree()
+	tree := newTree()
 	for scanner.Scan() {
 		text := scanner.Text()
 		transaction := itemizer.Itemize(strings.Split(text, ","))
 
 		// Strip out items below minCount
-		transaction = Filter(transaction, func(i Item) bool {
+		transaction = filter(transaction, func(i Item) bool {
 			return frequency[i] >= minCount
 		})
 		if len(transaction) == 0 {
@@ -242,10 +245,10 @@ func main() {
 	}
 	log.Printf("Building initial tree took %s", time.Since(start))
 
-	log.Println("Generating frequent itemsets via FPGrowth")
+	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
-	itemsWithCount := FPGrowth(tree, make([]Item, 0), minCount)
-	log.Printf("FPGrowth generated %d frequent patterns in %s",
+	itemsWithCount := fpGrowth(tree, make([]Item, 0), minCount)
+	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
 	// Print out frequent itemsets.
