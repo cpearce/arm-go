@@ -156,6 +156,25 @@ func pathFromRootToExcluding(node *fpNode) []Item {
 	}
 }
 
+func appendSorted(itemset []Item, item Item) []Item {
+	xs := make([]Item, len(itemset)+1)
+	i := 0
+	for idx := range itemset {
+		val := itemset[idx]
+		if item > val {
+			xs[i] = val
+			i++
+		} else {
+			break
+		}
+	}
+	xs[i] = item
+	for j := i + 1; j < len(xs); j++ {
+		xs[j] = itemset[j-1]
+	}
+	return xs
+}
+
 func fpGrowth(tree *fpTree, itemset []Item, minCount int) []itemSetWithCount {
 	itemsets := make([]itemSetWithCount, 0)
 	for item, itemList := range tree.itemList {
@@ -167,7 +186,7 @@ func fpGrowth(tree *fpTree, itemset []Item, minCount int) []itemSetWithCount {
 			transaction := pathFromRootToExcluding(leaf)
 			conditionalTree.Insert(transaction, leaf.count)
 		}
-		path := append(itemset, item)
+		path := appendSorted(itemset, item)
 		itemsets = append(itemsets, itemSetWithCount{
 			itemset: path,
 			count:   conditionalTree.root.count,
