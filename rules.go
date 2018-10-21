@@ -10,6 +10,7 @@ type Rule struct {
 	Lift       float64
 }
 
+// NewRule creates a new rule.
 func NewRule(antecedent []Item, consequent []Item, support float64, confidence float64, lift float64) Rule {
 	return Rule{
 		Antecedent: antecedent,
@@ -73,19 +74,23 @@ type RuleSetIterator struct {
 	next *Rule
 }
 
+// Next attempts to advance the iterator; returns true on success, whereupon
+// you can can call Get() to retrieve the value. Returns false when the
+// iteration reaches the end.
 func (rsi *RuleSetIterator) Next() bool {
 	rule, more := <-rsi.c
 	rsi.next = rule
 	return more
 }
 
+// Get retrieves the value at the current point in the iteration.
 func (rsi *RuleSetIterator) Get() *Rule {
 	return rsi.next
 }
 
 func keys(m map[Item]*ruleTreeNode) []Item {
 	items := make([]Item, 0)
-	for item, _ := range m {
+	for item := range m {
 		items = append(items, item)
 	}
 	return items
