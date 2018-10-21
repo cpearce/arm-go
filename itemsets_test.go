@@ -40,4 +40,12 @@ func TestIntersection(t *testing.T) {
 		testCase{[]Item{1, 2, 3}, []Item{0, 1, 2, 4, 5, 6}, []Item{1, 2}},
 	}
 	test(testCases, intersection, t)
+
+	for _, tc := range testCases {
+		t.Log(tc)
+		u := intersectionSize(tc.a, tc.b)
+		if u != len(tc.c) {
+			t.Error("Result=", u)
+		}
+	}
 }
