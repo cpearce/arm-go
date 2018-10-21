@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -60,6 +59,5 @@ func TestRules(t *testing.T) {
 		if !found {
 			t.Errorf("Mising rule!")
 		}
-		fmt.Println("Rule ", rule)
 	}
 }
