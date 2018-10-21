@@ -20,7 +20,7 @@ func ruleEquals(a *Rule, b *Rule) bool {
 	return itemSliceEquals(a.Antecedent, b.Antecedent) && itemSliceEquals(a.Consequent, b.Consequent)
 }
 
-func TestRules(t *testing.T) {
+func TestRuleSet(t *testing.T) {
 
 	ruleData := []Rule{
 		NewRule([]Item{1, 2, 3}, []Item{4, 5, 6}, 0.1, 0.2, 0.3),
@@ -31,7 +31,7 @@ func TestRules(t *testing.T) {
 
 	rs := NewRuleSet()
 	for _, r := range ruleData {
-		rs.Insert(&r)
+		rs.Insert(r)
 	}
 
 	expectedRules := []Rule{
@@ -42,12 +42,10 @@ func TestRules(t *testing.T) {
 
 	foundRule := make([]bool, len(expectedRules))
 
-	iterator := rs.Iterator()
-	for iterator.Next() {
-		rule := iterator.Get()
+	for _, rule := range rs.Rules() {
 		found := false
 		for i, r := range expectedRules {
-			if ruleEquals(&r, rule) {
+			if ruleEquals(&r, &rule) {
 				if foundRule[i] {
 					t.Errorf("Duplicate find")
 				}
@@ -59,5 +57,12 @@ func TestRules(t *testing.T) {
 		if !found {
 			t.Errorf("Mising rule!")
 		}
+	}
+}
+
+func TestWithout(t *testing.T) {
+	a, c := without([]Item{1, 2, 3}, Item(2))
+	if !itemSliceEquals(a, []Item{1, 3}) || !itemSliceEquals(c, []Item{2}) {
+		t.Error()
 	}
 }

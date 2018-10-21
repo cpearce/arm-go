@@ -274,4 +274,13 @@ func main() {
 	for _, itemWithCount := range itemsWithCount {
 		fmt.Println(itemWithCount.itemset, itemWithCount.count)
 	}
+
+	start = time.Now()
+	rules := generateRules(itemsWithCount, numTransactions, 0.05, 1.5)
+	log.Printf("Generated %d association rules in %s",
+		len(rules.Rules()), time.Since(start))
+	for _, rule := range rules.Rules() {
+		fmt.Println(rule)
+	}
+
 }
