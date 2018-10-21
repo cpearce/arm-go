@@ -228,6 +228,7 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("First pass took %s", time.Since(start))
+	log.Printf("Data set contains %d transactions", numTransactions)
 
 	minCount := int(math.Floor(minSupport * float64(numTransactions)))
 
@@ -271,6 +272,7 @@ func main() {
 		len(itemsWithCount), time.Since(start))
 
 	// Print out frequent itemsets.
+	fmt.Println("itemsets:")
 	for _, itemWithCount := range itemsWithCount {
 		fmt.Println(itemWithCount.itemset, itemWithCount.count)
 	}

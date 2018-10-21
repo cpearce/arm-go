@@ -1,6 +1,6 @@
 package main
 
-// Rule represents an antecedent implies consequent rult, and stores its
+// Rule represents an antecedent implies consequent rule, and stores its
 // support, confidence, and lift.
 type Rule struct {
 	Antecedent []Item
@@ -25,6 +25,7 @@ type ruleTreeNode struct {
 	antecedents map[Item]*ruleTreeNode
 	consequents map[Item]*ruleTreeNode
 	hasRule     bool
+	index       int
 }
 
 func newRuleTreeNode() *ruleTreeNode {
@@ -67,12 +68,42 @@ func (ruleSet *RuleSet) Insert(rule Rule) {
 	if !parent.hasRule {
 		ruleSet.rules = append(ruleSet.rules, rule)
 		parent.hasRule = true
+		parent.index = len(ruleSet.rules) - 1
 	}
+}
+
+// Size returns the number of rules in the set.
+func (ruleSet *RuleSet) Size() int {
+	return len(ruleSet.rules)
 }
 
 // Rules returns the set of rules.
 func (ruleSet *RuleSet) Rules() []Rule {
 	return ruleSet.rules
+}
+
+// Get returns (rule,true) if this RuleSet contains the rule, (nil,false)
+// otherwise.
+func (ruleSet *RuleSet) Get(rule *Rule) (*Rule, bool) {
+	parent := ruleSet.root
+	for _, item := range rule.Antecedent {
+		node, found := parent.antecedents[item]
+		if !found {
+			return nil, false
+		}
+		parent = node
+	}
+	for _, item := range rule.Consequent {
+		node, found := parent.consequents[item]
+		if !found {
+			return nil, false
+		}
+		parent = node
+	}
+	if !parent.hasRule {
+		return nil, false
+	}
+	return &ruleSet.rules[parent.index], true
 }
 
 type itemsetSupportLookup struct {
