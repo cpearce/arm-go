@@ -45,6 +45,10 @@ func NewRuleSet() RuleSet {
 	return RuleSet{root: newRuleTreeNode()}
 }
 
+// func merge(a *Rule, b *Rule) Rule {
+
+// }
+
 // Insert inserts a rule into a RuleSet.
 func (ruleSet *RuleSet) Insert(rule *Rule) {
 	parent := ruleSet.root
@@ -117,4 +121,23 @@ func (ruleSet *RuleSet) Iterator() RuleSetIterator {
 		close(c)
 	}()
 	return RuleSetIterator{c: c}
+}
+
+type itemssetSupportLookup struct {
+	children map[Item]*itemssetSupportLookup
+	support  float64
+}
+
+func createSupportLookup(itemsets []itemSetWithCount, numTransactions int) itemssetSupportLookup {
+	isl := itemssetSupportLookup{
+		children: make(map[Item]*itemssetSupportLookup),
+	}
+
+	return isl
+}
+
+func generateRules(itemsets []itemSetWithCount, numTransactions int, minConfidence float64) RuleSet {
+	rs := NewRuleSet()
+	itemsetSupport := createSupportLookup(itemsets, numTransactions)
+	return rs
 }
