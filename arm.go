@@ -29,7 +29,7 @@ import (
 type Item int
 
 func filter(vs []Item, f func(Item) bool) []Item {
-	vsf := make([]Item, 0)
+	vsf := make([]Item, 0, len(vs))
 	for _, v := range vs {
 		if f(v) {
 			vsf = append(vsf, v)
