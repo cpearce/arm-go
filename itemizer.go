@@ -11,7 +11,7 @@ type Itemizer struct {
 
 // Itemize converts a slice of strings to a slice of Items.
 func (it *Itemizer) Itemize(values []string) []Item {
-	items := make([]Item, 0)
+	items := make([]Item, 0, len(values))
 	for _, val := range values {
 		val = strings.TrimSpace(val)
 		if len(val) == 0 {
