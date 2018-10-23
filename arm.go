@@ -28,14 +28,10 @@ import (
 // Item represents an item.
 type Item int
 
-func filter(vs []Item, f func(Item) bool) []Item {
-	vsf := make([]Item, 0, len(vs))
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
+func check(e error) {
+	if e != nil {
+		panic(e)
 	}
-	return vsf
 }
 
 func main() {
@@ -64,9 +60,7 @@ func main() {
 				frequency.increment(item, 1)
 			})
 	}
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+	check(scanner.Err())
 	log.Printf("First pass took %s", time.Since(start))
 	log.Printf("Data set contains %d transactions", numTransactions)
 
@@ -98,9 +92,7 @@ func main() {
 		})
 		tree.Insert(transaction, 1)
 	}
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+	check(scanner.Err())
 	log.Printf("Building initial tree took %s", time.Since(start))
 
 	log.Println("Generating frequent itemsets via fpGrowth")
@@ -119,8 +111,29 @@ func main() {
 	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
 	log.Printf("Generated %d association rules in %s",
 		len(rules.Rules()), time.Since(start))
+	output, err := os.Create(args.output)
+	check(err)
+	w := bufio.NewWriter(output)
+	fmt.Fprintln(w, "Antecedent => Consequent,Confidence,Lift,Support")
 	for _, rule := range rules.Rules() {
-		fmt.Println(rule)
+		first := true
+		for _, item := range rule.Antecedent {
+			if !first {
+				fmt.Fprintf(w, " ")
+				first = false
+			}
+			fmt.Fprint(w, itemizer.toStr(item))
+		}
+		fmt.Fprint(w, " => ")
+		first = true
+		for _, item := range rule.Consequent {
+			if !first {
+				fmt.Fprintf(w, " ")
+				first = false
+			}
+			fmt.Fprint(w, itemizer.toStr(item))
+		}
+		fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
 	}
-
+	w.Flush()
 }
