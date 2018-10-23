@@ -2,6 +2,36 @@ package main
 
 import "strings"
 
+type itemCount struct {
+	counts []int
+}
+
+func makeCounts() itemCount {
+	return itemCount{counts: make([]int, 0)}
+}
+
+func ensureInBounds(slice []int, index int) []int {
+	if index < len(slice) {
+		return slice
+	}
+	delta := 1 + index - len(slice)
+	return append(slice, make([]int, delta)...)
+}
+
+func (ic *itemCount) increment(item Item, count int) {
+	idx := int(item)
+	ic.counts = ensureInBounds(ic.counts, idx)
+	ic.counts[idx] += count
+}
+
+func (ic *itemCount) get(item Item) int {
+	idx := int(item)
+	if idx >= len(ic.counts) {
+		return 0
+	}
+	return ic.counts[idx]
+}
+
 // Itemizer converts between a string to an Item type, and vice versa.
 type Itemizer struct {
 	strToItem map[string]Item

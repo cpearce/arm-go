@@ -13,7 +13,7 @@ type fpNode struct {
 type fpTree struct {
 	root     *fpNode
 	itemList itemToNodeSlice
-	counts   map[Item]int
+	counts   itemCount
 }
 
 const invalidItem = Item(0)
@@ -31,7 +31,7 @@ func newTree() *fpTree {
 	return &fpTree{
 		root:     newNode(invalidItem, nil),
 		itemList: make(itemToNodeSlice),
-		counts:   make(map[Item]int),
+		counts:   makeCounts(),
 	}
 }
 
@@ -45,7 +45,7 @@ func (tree *fpTree) Insert(transaction []Item, count int) {
 			parent.children[item] = node
 			tree.itemList[item] = append(tree.itemList[item], node)
 		}
-		tree.counts[item] += count
+		tree.counts.increment(item, count)
 		node.count += count
 		parent = node
 	}
@@ -101,7 +101,7 @@ func appendSorted(itemset []Item, item Item) []Item {
 func fpGrowth(tree *fpTree, itemset []Item, minCount int) []itemSetWithCount {
 	itemsets := make([]itemSetWithCount, 0)
 	for item, itemList := range tree.itemList {
-		if tree.counts[item] < minCount {
+		if tree.counts.get(item) < minCount {
 			continue
 		}
 		conditionalTree := newTree()

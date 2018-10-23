@@ -49,8 +49,7 @@ func main() {
 	}
 	defer file.Close()
 
-	frequency := make(map[Item]int)
-
+	frequency := makeCounts()
 	itemizer := newItemizer()
 
 	log.Println("First pass, counting Item frequencies.")
@@ -62,7 +61,7 @@ func main() {
 		itemizer.forEachItem(
 			strings.Split(scanner.Text(), ","),
 			func(item Item) {
-				frequency[item]++
+				frequency.increment(item, 1)
 			})
 	}
 	if err := scanner.Err(); err != nil {
@@ -82,7 +81,7 @@ func main() {
 		transaction := itemizer.filter(
 			strings.Split(scanner.Text(), ","),
 			func(i Item) bool {
-				return frequency[i] >= minCount
+				return frequency.get(i) >= minCount
 			})
 
 		if len(transaction) == 0 {
@@ -92,12 +91,11 @@ func main() {
 		sort.SliceStable(transaction, func(i, j int) bool {
 			a := transaction[i]
 			b := transaction[j]
-			if frequency[a] == frequency[b] {
+			if frequency.get(a) == frequency.get(b) {
 				return itemizer.cmp(a, b)
 			}
-			return frequency[a] > frequency[b]
+			return frequency.get(a) > frequency.get(b)
 		})
-
 		tree.Insert(transaction, 1)
 	}
 	if err := scanner.Err(); err != nil {
