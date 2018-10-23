@@ -11,8 +11,27 @@ type Itemizer struct {
 
 // Itemize converts a slice of strings to a slice of Items.
 func (it *Itemizer) Itemize(values []string) []Item {
-	items := make([]Item, 0, len(values))
-	for _, val := range values {
+	items := make([]Item, len(values))
+	j := 0
+	it.forEachItem(values, func(i Item) {
+		items[j] = i
+		j++
+	})
+	return items[:j]
+}
+
+func (it *Itemizer) filter(tokens []string, filter func(Item) bool) []Item {
+	items := make([]Item, 0, len(tokens))
+	it.forEachItem(tokens, func(i Item) {
+		if filter(i) {
+			items = append(items, i)
+		}
+	})
+	return items
+}
+
+func (it *Itemizer) forEachItem(tokens []string, fn func(Item)) {
+	for _, val := range tokens {
 		val = strings.TrimSpace(val)
 		if len(val) == 0 {
 			continue
@@ -24,9 +43,8 @@ func (it *Itemizer) Itemize(values []string) []Item {
 			it.strToItem[val] = itemID
 			it.itemToStr[itemID] = val
 		}
-		items = append(items, itemID)
+		fn(itemID)
 	}
-	return items
 }
 
 func (it *Itemizer) cmp(a Item, b Item) bool {

@@ -59,11 +59,11 @@ func main() {
 	numTransactions := 0
 	for scanner.Scan() {
 		numTransactions++
-		text := scanner.Text()
-		transaction := itemizer.Itemize(strings.Split(text, ","))
-		for _, item := range transaction {
-			frequency[item]++
-		}
+		itemizer.forEachItem(
+			strings.Split(scanner.Text(), ","),
+			func(item Item) {
+				frequency[item]++
+			})
 	}
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
@@ -79,13 +79,12 @@ func main() {
 	scanner = bufio.NewScanner(file)
 	tree := newTree()
 	for scanner.Scan() {
-		text := scanner.Text()
-		transaction := itemizer.Itemize(strings.Split(text, ","))
+		transaction := itemizer.filter(
+			strings.Split(scanner.Text(), ","),
+			func(i Item) bool {
+				return frequency[i] >= minCount
+			})
 
-		// Strip out items below minCount
-		transaction = filter(transaction, func(i Item) bool {
-			return frequency[i] >= minCount
-		})
 		if len(transaction) == 0 {
 			continue
 		}
