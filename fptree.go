@@ -8,6 +8,7 @@ type fpNode struct {
 	count    int
 	parent   *fpNode
 	children []*fpNode
+	depth    int
 }
 
 type fpTree struct {
@@ -18,18 +19,19 @@ type fpTree struct {
 
 const invalidItem = Item(0)
 
-func newNode(item Item, parent *fpNode) *fpNode {
+func newNode(item Item, parent *fpNode, depth int) *fpNode {
 	return &fpNode{
 		item:     item,
 		count:    0,
 		parent:   parent,
 		children: make([]*fpNode, 0),
+		depth:    depth,
 	}
 }
 
 func newTree() *fpTree {
 	return &fpTree{
-		root:     newNode(invalidItem, nil),
+		root:     newNode(invalidItem, nil, 0),
 		itemList: make(itemToNodeSlice),
 		counts:   makeCounts(),
 	}
@@ -38,6 +40,7 @@ func newTree() *fpTree {
 func (tree *fpTree) Insert(transaction []Item, count int) {
 	tree.root.count += count
 	parent := tree.root
+	depth := 1
 	for _, item := range transaction {
 		var node *fpNode
 		for idx := range parent.children {
@@ -47,13 +50,14 @@ func (tree *fpTree) Insert(transaction []Item, count int) {
 			}
 		}
 		if node == nil {
-			node = newNode(item, parent)
+			node = newNode(item, parent, depth)
 			parent.children = append(parent.children, node)
 			tree.itemList[item] = append(tree.itemList[item], node)
 		}
 		tree.counts.increment(item, count)
 		node.count += count
 		parent = node
+		depth++
 	}
 }
 
@@ -74,7 +78,7 @@ func isRoot(node *fpNode) bool {
 }
 
 func pathFromRootToExcluding(node *fpNode) []Item {
-	path := make([]Item, 0)
+	path := make([]Item, 0, node.depth-1)
 	for {
 		node = node.parent
 		if isRoot(node) {
