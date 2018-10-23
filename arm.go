@@ -39,11 +39,11 @@ func filter(vs []Item, f func(Item) bool) []Item {
 }
 
 func main() {
+	log.Println("Association Rule Mining - in Go via FPGrowth")
 
-	log.Println("Association Rule Mining - in Go")
-	const minSupport = 0.05
+	args := parseArgsOrDie()
 
-	file, err := os.Open("datasets/kosarak.csv")
+	file, err := os.Open(args.input)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func main() {
 	log.Printf("First pass took %s", time.Since(start))
 	log.Printf("Data set contains %d transactions", numTransactions)
 
-	minCount := int(math.Floor(minSupport * float64(numTransactions)))
+	minCount := int(math.Floor(args.minSupport * float64(numTransactions)))
 
 	log.Println("Second pass, building initial tree..")
 	start = time.Now()
@@ -116,7 +116,7 @@ func main() {
 	}
 
 	start = time.Now()
-	rules := generateRules(itemsWithCount, numTransactions, 0.05, 1.5)
+	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
 	log.Printf("Generated %d association rules in %s",
 		len(rules.Rules()), time.Since(start))
 	for _, rule := range rules.Rules() {
