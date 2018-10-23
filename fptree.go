@@ -1,7 +1,6 @@
 package main
 
 type itemToNodeSlice map[Item][]*fpNode
-type itemToNode map[Item]*fpNode
 
 type fpNode struct {
 	item     Item
