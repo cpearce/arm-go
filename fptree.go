@@ -7,7 +7,7 @@ type fpNode struct {
 	item     Item
 	count    int
 	parent   *fpNode
-	children itemToNode
+	children []*fpNode
 }
 
 type fpTree struct {
@@ -23,7 +23,7 @@ func newNode(item Item, parent *fpNode) *fpNode {
 		item:     item,
 		count:    0,
 		parent:   parent,
-		children: make(itemToNode),
+		children: make([]*fpNode, 0),
 	}
 }
 
@@ -39,10 +39,16 @@ func (tree *fpTree) Insert(transaction []Item, count int) {
 	tree.root.count += count
 	parent := tree.root
 	for _, item := range transaction {
-		node, found := parent.children[item]
-		if !found {
+		var node *fpNode
+		for idx := range parent.children {
+			if parent.children[idx].item == item {
+				node = parent.children[idx]
+				break
+			}
+		}
+		if node == nil {
 			node = newNode(item, parent)
-			parent.children[item] = node
+			parent.children = append(parent.children, node)
 			tree.itemList[item] = append(tree.itemList[item], node)
 		}
 		tree.counts.increment(item, count)
