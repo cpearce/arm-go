@@ -34,6 +34,53 @@ func check(e error) {
 	}
 }
 
+func writeItemsets(itemsets []itemSetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) {
+	output, err := os.Create(outputPath)
+	check(err)
+	w := bufio.NewWriter(output)
+	fmt.Fprintln(w, "Itemset,Support")
+	n := float64(numTransactions)
+	for _, iwc := range itemsets {
+		first := true
+		for _, item := range iwc.itemset {
+			if !first {
+				fmt.Fprintf(w, " ")
+				first = false
+			}
+			fmt.Fprint(w, itemizer.toStr(item))
+		}
+		fmt.Fprintf(w, "%f\n", float64(iwc.count)/n)
+	}
+}
+
+func writeRules(rules RuleSet, outputPath string, itemizer *Itemizer) {
+	output, err := os.Create(outputPath)
+	check(err)
+	w := bufio.NewWriter(output)
+	fmt.Fprintln(w, "Antecedent => Consequent,Confidence,Lift,Support")
+	for _, rule := range rules.Rules() {
+		first := true
+		for _, item := range rule.Antecedent {
+			if !first {
+				fmt.Fprintf(w, " ")
+				first = false
+			}
+			fmt.Fprint(w, itemizer.toStr(item))
+		}
+		fmt.Fprint(w, " => ")
+		first = true
+		for _, item := range rule.Consequent {
+			if !first {
+				fmt.Fprintf(w, " ")
+				first = false
+			}
+			fmt.Fprint(w, itemizer.toStr(item))
+		}
+		fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
+	}
+	w.Flush()
+}
+
 func main() {
 	log.Println("Association Rule Mining - in Go via FPGrowth")
 
@@ -101,39 +148,20 @@ func main() {
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
-	// Print out frequent itemsets.
-	fmt.Println("itemsets:")
-	for _, itemWithCount := range itemsWithCount {
-		fmt.Println(itemWithCount.itemset, itemWithCount.count)
+	if len(args.itemsetsPath) > 0 {
+		log.Printf("Writing itemsets to '%s'\n", args.itemsetsPath)
+		start = time.Now()
+		writeItemsets(itemsWithCount, args.itemsetsPath, &itemizer, numTransactions)
+		log.Printf("Wrote %d itemsets in %s", len(itemsWithCount), time.Since(start))
 	}
 
 	start = time.Now()
 	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
 	log.Printf("Generated %d association rules in %s",
 		len(rules.Rules()), time.Since(start))
-	output, err := os.Create(args.output)
-	check(err)
-	w := bufio.NewWriter(output)
-	fmt.Fprintln(w, "Antecedent => Consequent,Confidence,Lift,Support")
-	for _, rule := range rules.Rules() {
-		first := true
-		for _, item := range rule.Antecedent {
-			if !first {
-				fmt.Fprintf(w, " ")
-				first = false
-			}
-			fmt.Fprint(w, itemizer.toStr(item))
-		}
-		fmt.Fprint(w, " => ")
-		first = true
-		for _, item := range rule.Consequent {
-			if !first {
-				fmt.Fprintf(w, " ")
-				first = false
-			}
-			fmt.Fprint(w, itemizer.toStr(item))
-		}
-		fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
-	}
-	w.Flush()
+
+	start = time.Now()
+	log.Printf("Writing rules to '%s'...", args.output)
+	writeRules(rules, args.output, &itemizer)
+	log.Printf("Wrote %d rules in %s", rules.Size(), time.Since(start))
 }

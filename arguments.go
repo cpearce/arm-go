@@ -12,6 +12,7 @@ type arguments struct {
 	minSupport    float64
 	minConfidence float64
 	minLift       float64
+	itemsetsPath  string
 }
 
 const usage = `Arguments:
@@ -24,6 +25,8 @@ const usage = `Arguments:
                         Minimum rule confidence threshold, in range [0,1].
   --min-lift threshold  Minimum rule lift confidence threshold, in range
                         [1,∞] (optional).
+  --itemsets file_path  File path in which to store generated itemsets
+                        (optional).
 `
 
 func parseArgsOrDie() arguments {
@@ -59,6 +62,15 @@ func parseArgsOrDie() arguments {
 					os.Exit(-1)
 				}
 				result.output = args[i+1]
+				i++
+			}
+		case "--itemsets":
+			{
+				if i+1 > len(args) {
+					fmt.Println("Expected --itemsets to be followed by output itemsets path.")
+					os.Exit(-1)
+				}
+				result.itemsetsPath = args[i+1]
 				i++
 			}
 		case "--min-support":
