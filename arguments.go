@@ -13,6 +13,7 @@ type arguments struct {
 	minConfidence float64
 	minLift       float64
 	itemsetsPath  string
+	profile       bool
 }
 
 const usage = `Arguments:
@@ -27,6 +28,7 @@ const usage = `Arguments:
                         [1,∞] (optional).
   --itemsets file_path  File path in which to store generated itemsets
                         (optional).
+  --profile             Enables profiling via 'profile' package (optional).
 `
 
 func parseArgsOrDie() arguments {
@@ -116,6 +118,10 @@ func parseArgsOrDie() arguments {
 				}
 				result.minLift = f
 				i++
+			}
+		case "--profile":
+			{
+				result.profile = true
 			}
 		}
 	}

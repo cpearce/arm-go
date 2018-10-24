@@ -23,6 +23,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/pkg/profile"
 )
 
 // Item represents an item.
@@ -85,6 +87,9 @@ func main() {
 	log.Println("Association Rule Mining - in Go via FPGrowth")
 
 	args := parseArgsOrDie()
+	if args.profile {
+		defer profile.Start().Stop()
+	}
 
 	file, err := os.Open(args.input)
 	if err != nil {
