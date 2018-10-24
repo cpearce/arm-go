@@ -64,7 +64,7 @@ func main() {
 	log.Printf("First pass took %s", time.Since(start))
 	log.Printf("Data set contains %d transactions", numTransactions)
 
-	minCount := int(math.Floor(args.minSupport * float64(numTransactions)))
+	minCount := int(math.Ceil(args.minSupport * float64(numTransactions)))
 
 	log.Println("Second pass, building initial tree..")
 	start = time.Now()
