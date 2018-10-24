@@ -50,6 +50,14 @@ func (it *Itemizer) Itemize(values []string) []Item {
 	return items[:j]
 }
 
+func (it *Itemizer) toStr(item Item) string {
+	s, found := it.itemToStr[item]
+	if !found {
+		return "UNKNOWN"
+	}
+	return s
+}
+
 func (it *Itemizer) filter(tokens []string, filter func(Item) bool) []Item {
 	items := make([]Item, 0, len(tokens))
 	it.forEachItem(tokens, func(i Item) {
