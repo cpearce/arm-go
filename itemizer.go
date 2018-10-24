@@ -53,7 +53,7 @@ func (it *Itemizer) Itemize(values []string) []Item {
 func (it *Itemizer) toStr(item Item) string {
 	s, found := it.itemToStr[item]
 	if !found {
-		return "UNKNOWN"
+		panic("Failed to convert item to string!")
 	}
 	return s
 }
