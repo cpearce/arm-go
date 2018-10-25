@@ -21,6 +21,13 @@ func min(x, y int) int {
 	return y
 }
 
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
 func intersection(a []Item, b []Item) []Item {
 	c := make([]Item, 0, min(len(a), len(b)))
 	ap := 0
