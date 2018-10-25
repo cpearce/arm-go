@@ -47,12 +47,13 @@ func writeItemsets(itemsets []itemSetWithCount, outputPath string, itemizer *Ite
 		for _, item := range iwc.itemset {
 			if !first {
 				fmt.Fprintf(w, " ")
-				first = false
 			}
+			first = false
 			fmt.Fprint(w, itemizer.toStr(item))
 		}
-		fmt.Fprintf(w, "%f\n", float64(iwc.count)/n)
+		fmt.Fprintf(w, " %f\n", float64(iwc.count)/n)
 	}
+	w.Flush()
 }
 
 func writeRules(rules RuleSet, outputPath string, itemizer *Itemizer) {
