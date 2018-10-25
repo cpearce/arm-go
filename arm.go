@@ -84,25 +84,14 @@ func writeRules(rules RuleSet, outputPath string, itemizer *Itemizer) {
 	w.Flush()
 }
 
-func main() {
-	log.Println("Association Rule Mining - in Go via FPGrowth")
-
-	args := parseArgsOrDie()
-	if args.profile {
-		defer profile.Start().Stop()
-	}
-
-	file, err := os.Open(args.input)
-	if err != nil {
-		log.Fatal(err)
-	}
+func countItems(path string) (*Itemizer, *itemCount, int) {
+	file, err := os.Open(path)
+	check(err)
 	defer file.Close()
 
 	frequency := makeCounts()
 	itemizer := newItemizer()
 
-	log.Println("First pass, counting Item frequencies.")
-	start := time.Now()
 	scanner := bufio.NewScanner(file)
 	numTransactions := 0
 	for scanner.Scan() {
@@ -114,15 +103,17 @@ func main() {
 			})
 	}
 	check(scanner.Err())
-	log.Printf("First pass took %s", time.Since(start))
-	log.Printf("Data set contains %d transactions", numTransactions)
+	return &itemizer, &frequency, numTransactions
+}
 
-	minCount := max(1, int(math.Ceil(args.minSupport*float64(numTransactions))))
+func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) []itemSetWithCount {
+	file, err := os.Open(path)
+	check(err)
+	defer file.Close()
 
-	log.Println("Second pass, building initial tree..")
-	start = time.Now()
-	file.Seek(0, 0)
-	scanner = bufio.NewScanner(file)
+	minCount := max(1, int(math.Ceil(minSupport*float64(numTransactions))))
+
+	scanner := bufio.NewScanner(file)
 	tree := newTree()
 	for scanner.Scan() {
 		transaction := itemizer.filter(
@@ -146,18 +137,34 @@ func main() {
 		tree.Insert(transaction, 1)
 	}
 	check(scanner.Err())
-	log.Printf("Building initial tree took %s", time.Since(start))
+
+	return fpGrowth(tree, make([]Item, 0), minCount)
+}
+
+func main() {
+	log.Println("Association Rule Mining - in Go via FPGrowth")
+
+	args := parseArgsOrDie()
+	if args.profile {
+		defer profile.Start().Stop()
+	}
+
+	log.Println("First pass, counting Item frequencies...")
+	start := time.Now()
+	itemizer, frequency, numTransactions := countItems(args.input)
+	log.Printf("First pass finished in %s", time.Since(start))
 
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
-	itemsWithCount := fpGrowth(tree, make([]Item, 0), minCount)
+
+	itemsWithCount := generateFrequentItemsets(args.input, args.minSupport, itemizer, frequency, numTransactions)
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
 	if len(args.itemsetsPath) > 0 {
 		log.Printf("Writing itemsets to '%s'\n", args.itemsetsPath)
-		start = time.Now()
-		writeItemsets(itemsWithCount, args.itemsetsPath, &itemizer, numTransactions)
+		start := time.Now()
+		writeItemsets(itemsWithCount, args.itemsetsPath, itemizer, numTransactions)
 		log.Printf("Wrote %d itemsets in %s", len(itemsWithCount), time.Since(start))
 	}
 
@@ -168,6 +175,6 @@ func main() {
 
 	start = time.Now()
 	log.Printf("Writing rules to '%s'...", args.output)
-	writeRules(rules, args.output, &itemizer)
+	writeRules(rules, args.output, itemizer)
 	log.Printf("Wrote %d rules in %s", rules.Size(), time.Since(start))
 }
