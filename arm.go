@@ -168,6 +168,7 @@ func main() {
 		log.Printf("Wrote %d itemsets in %s", len(itemsWithCount), time.Since(start))
 	}
 
+	log.Println("Generating association rules...")
 	start = time.Now()
 	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
 	log.Printf("Generated %d association rules in %s",
