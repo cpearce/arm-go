@@ -36,7 +36,7 @@ func check(e error) {
 	}
 }
 
-func writeItemsets(itemsets []itemSetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) {
+func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) {
 	output, err := os.Create(outputPath)
 	check(err)
 	w := bufio.NewWriter(output)
@@ -106,7 +106,7 @@ func countItems(path string) (*Itemizer, *itemCount, int) {
 	return &itemizer, &frequency, numTransactions
 }
 
-func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) []itemSetWithCount {
+func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) []itemsetWithCount {
 	file, err := os.Open(path)
 	check(err)
 	defer file.Close()

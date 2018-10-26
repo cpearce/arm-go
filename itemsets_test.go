@@ -64,7 +64,7 @@ func TestIntersection(t *testing.T) {
 	}
 }
 
-func containsIWC(expected []itemSetWithCount, observed itemSetWithCount) bool {
+func containsIWC(expected []itemsetWithCount, observed itemsetWithCount) bool {
 	for _, iws := range expected {
 		if itemSliceEquals(observed.itemset, iws.itemset) {
 			return observed.count == iws.count
@@ -76,40 +76,40 @@ func containsIWC(expected []itemSetWithCount, observed itemSetWithCount) bool {
 func TestFPGrowth(t *testing.T) {
 	t.Log("TestFPGrowth")
 
-	expectedItemsets := []itemSetWithCount{
-		itemSetWithCount{[]Item{148}, 69922},
-		itemSetWithCount{[]Item{11, 148}, 55759},
-		itemSetWithCount{[]Item{6, 11, 148}, 55230},
-		itemSetWithCount{[]Item{148, 218}, 58823},
-		itemSetWithCount{[]Item{11, 148, 218}, 50098},
-		itemSetWithCount{[]Item{6, 11, 148, 218}, 49866},
-		itemSetWithCount{[]Item{6, 148, 218}, 56838},
-		itemSetWithCount{[]Item{6, 148}, 64750},
-		itemSetWithCount{[]Item{218}, 88598},
-		itemSetWithCount{[]Item{6, 218}, 77675},
-		itemSetWithCount{[]Item{11, 218}, 61656},
-		itemSetWithCount{[]Item{6, 11, 218}, 60630},
-		itemSetWithCount{[]Item{3}, 450031},
-		itemSetWithCount{[]Item{3, 6}, 265180},
-		itemSetWithCount{[]Item{1}, 197522},
-		itemSetWithCount{[]Item{1, 3}, 84660},
-		itemSetWithCount{[]Item{1, 3, 6}, 57802},
-		itemSetWithCount{[]Item{1, 6}, 132113},
-		itemSetWithCount{[]Item{1, 11}, 91882},
-		itemSetWithCount{[]Item{1, 6, 11}, 86092},
-		itemSetWithCount{[]Item{6}, 601374},
-		itemSetWithCount{[]Item{4}, 78097},
-		itemSetWithCount{[]Item{27}, 72134},
-		itemSetWithCount{[]Item{6, 27}, 59418},
-		itemSetWithCount{[]Item{7}, 86898},
-		itemSetWithCount{[]Item{7, 11}, 57074},
-		itemSetWithCount{[]Item{6, 7, 11}, 55835},
-		itemSetWithCount{[]Item{6, 7}, 73610},
-		itemSetWithCount{[]Item{11}, 364065},
-		itemSetWithCount{[]Item{6, 11}, 324013},
-		itemSetWithCount{[]Item{3, 11}, 161286},
-		itemSetWithCount{[]Item{3, 6, 11}, 143682},
-		itemSetWithCount{[]Item{55}, 65412},
+	expectedItemsets := []itemsetWithCount{
+		itemsetWithCount{[]Item{148}, 69922},
+		itemsetWithCount{[]Item{11, 148}, 55759},
+		itemsetWithCount{[]Item{6, 11, 148}, 55230},
+		itemsetWithCount{[]Item{148, 218}, 58823},
+		itemsetWithCount{[]Item{11, 148, 218}, 50098},
+		itemsetWithCount{[]Item{6, 11, 148, 218}, 49866},
+		itemsetWithCount{[]Item{6, 148, 218}, 56838},
+		itemsetWithCount{[]Item{6, 148}, 64750},
+		itemsetWithCount{[]Item{218}, 88598},
+		itemsetWithCount{[]Item{6, 218}, 77675},
+		itemsetWithCount{[]Item{11, 218}, 61656},
+		itemsetWithCount{[]Item{6, 11, 218}, 60630},
+		itemsetWithCount{[]Item{3}, 450031},
+		itemsetWithCount{[]Item{3, 6}, 265180},
+		itemsetWithCount{[]Item{1}, 197522},
+		itemsetWithCount{[]Item{1, 3}, 84660},
+		itemsetWithCount{[]Item{1, 3, 6}, 57802},
+		itemsetWithCount{[]Item{1, 6}, 132113},
+		itemsetWithCount{[]Item{1, 11}, 91882},
+		itemsetWithCount{[]Item{1, 6, 11}, 86092},
+		itemsetWithCount{[]Item{6}, 601374},
+		itemsetWithCount{[]Item{4}, 78097},
+		itemsetWithCount{[]Item{27}, 72134},
+		itemsetWithCount{[]Item{6, 27}, 59418},
+		itemsetWithCount{[]Item{7}, 86898},
+		itemsetWithCount{[]Item{7, 11}, 57074},
+		itemsetWithCount{[]Item{6, 7, 11}, 55835},
+		itemsetWithCount{[]Item{6, 7}, 73610},
+		itemsetWithCount{[]Item{11}, 364065},
+		itemsetWithCount{[]Item{6, 11}, 324013},
+		itemsetWithCount{[]Item{3, 11}, 161286},
+		itemsetWithCount{[]Item{3, 6, 11}, 143682},
+		itemsetWithCount{[]Item{55}, 65412},
 	}
 
 	input := "datasets/kosarak.csv"

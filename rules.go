@@ -159,7 +159,7 @@ func (isl *itemsetSupportLookup) lookup(itemset []Item) float64 {
 	return parent.support
 }
 
-func createSupportLookup(itemsets []itemSetWithCount, numTransactions int) *itemsetSupportLookup {
+func createSupportLookup(itemsets []itemsetWithCount, numTransactions int) *itemsetSupportLookup {
 	isl := newItemsetSupportLookup()
 	f := float64(numTransactions)
 	for _, is := range itemsets {
@@ -179,7 +179,7 @@ func makeStats(a []Item, c []Item, supportLookup *itemsetSupportLookup) (float64
 	return acSup, confidence, lift
 }
 
-func generateRules(itemsets []itemSetWithCount, numTransactions int, minConfidence float64, minLift float64) RuleSet {
+func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) RuleSet {
 	output := NewRuleSet()
 	itemsetSupport := createSupportLookup(itemsets, numTransactions)
 
