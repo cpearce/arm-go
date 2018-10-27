@@ -97,14 +97,12 @@ func createSupportLookup(itemsets []itemsetWithCount, numTransactions int) *item
 	return isl
 }
 
-func makeStats(a []Item, c []Item, supportLookup *itemsetSupportLookup) (float64, float64, float64) {
-	ac := union(a, c)
-	acSup := supportLookup.lookup(ac)
+func makeStats(a []Item, c []Item, ac []Item, acSup float64, supportLookup *itemsetSupportLookup) (float64, float64) {
 	aSup := supportLookup.lookup(a)
 	confidence := acSup / aSup
 	cSup := supportLookup.lookup(c)
 	lift := acSup / (aSup * cSup)
-	return acSup, confidence, lift
+	return confidence, lift
 }
 
 func itemSliceLess(a, b []Item) bool {
@@ -153,6 +151,7 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 	lastFeedback := time.Now()
 
 	for index, itemset := range itemsets {
+		support := float64(itemset.count) / float64(numTransactions)
 		if time.Since(lastFeedback).Seconds() > 20 {
 			numRules := len(itemsets)
 			lastFeedback = time.Now()
@@ -168,7 +167,7 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 		for _, item := range itemset.itemset {
 			consequent := []Item{item}
 			antecedent := setMinus(itemset.itemset, consequent)
-			support, confidence, lift := makeStats(antecedent, consequent, itemsetSupport)
+			confidence, lift := makeStats(antecedent, consequent, itemset.itemset, support, itemsetSupport)
 			if confidence < minConfidence {
 				continue
 			}
@@ -197,10 +196,11 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 						// find any more matches after that.
 						break
 					}
+
 					consequent := union(c1, candidates[idx2])
 					antecedent := setMinus(itemset.itemset, consequent)
 
-					support, confidence, lift := makeStats(antecedent, consequent, itemsetSupport)
+					confidence, lift := makeStats(antecedent, consequent, itemset.itemset, support, itemsetSupport)
 					if confidence < minConfidence {
 						continue
 					}
