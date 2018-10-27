@@ -41,91 +41,6 @@ func NewRule(antecedent []Item, consequent []Item, support float64, confidence f
 	}
 }
 
-type ruleTreeNode struct {
-	antecedents map[Item]*ruleTreeNode
-	consequents map[Item]*ruleTreeNode
-	hasRule     bool
-	index       int
-}
-
-func newRuleTreeNode() *ruleTreeNode {
-	return &ruleTreeNode{
-		antecedents: make(map[Item]*ruleTreeNode),
-		consequents: make(map[Item]*ruleTreeNode),
-	}
-}
-
-// RuleSet stores a set of rules in a compact tree structure.
-type RuleSet struct {
-	root  *ruleTreeNode
-	rules []Rule
-}
-
-// NewRuleSet creates a new RuleSet().
-func NewRuleSet() RuleSet {
-	return RuleSet{root: newRuleTreeNode()}
-}
-
-// Insert inserts a rule into a RuleSet.
-func (ruleSet *RuleSet) Insert(rule Rule) {
-	parent := ruleSet.root
-	for _, item := range rule.Antecedent {
-		node, found := parent.antecedents[item]
-		if !found {
-			node = newRuleTreeNode()
-			parent.antecedents[item] = node
-		}
-		parent = node
-	}
-	for _, item := range rule.Consequent {
-		node, found := parent.consequents[item]
-		if !found {
-			node = newRuleTreeNode()
-			parent.consequents[item] = node
-		}
-		parent = node
-	}
-	if !parent.hasRule {
-		ruleSet.rules = append(ruleSet.rules, rule)
-		parent.hasRule = true
-		parent.index = len(ruleSet.rules) - 1
-	}
-}
-
-// Size returns the number of rules in the set.
-func (ruleSet *RuleSet) Size() int {
-	return len(ruleSet.rules)
-}
-
-// Rules returns the set of rules.
-func (ruleSet *RuleSet) Rules() []Rule {
-	return ruleSet.rules
-}
-
-// Get returns (rule,true) if this RuleSet contains the rule, (nil,false)
-// otherwise.
-func (ruleSet *RuleSet) Get(rule *Rule) (*Rule, bool) {
-	parent := ruleSet.root
-	for _, item := range rule.Antecedent {
-		node, found := parent.antecedents[item]
-		if !found {
-			return nil, false
-		}
-		parent = node
-	}
-	for _, item := range rule.Consequent {
-		node, found := parent.consequents[item]
-		if !found {
-			return nil, false
-		}
-		parent = node
-	}
-	if !parent.hasRule {
-		return nil, false
-	}
-	return &ruleSet.rules[parent.index], true
-}
-
 type itemsetWithSupport struct {
 	itemset []Item
 	support float64
@@ -231,8 +146,8 @@ func prefixMatchLen(a []Item, b []Item) int {
 	return len(a)
 }
 
-func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) RuleSet {
-	output := NewRuleSet()
+func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) []Rule {
+	rules := make([]Rule, 0, 10000)
 	itemsetSupport := createSupportLookup(itemsets, numTransactions)
 
 	lastFeedback := time.Now()
@@ -243,7 +158,7 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 			lastFeedback = time.Now()
 			percentComplete := int(float64(index)/float64(numRules)*100 + 0.5)
 			log.Printf("Progress: %d of %d itemsets processed (%d%%), generated %d rules so far",
-				index, len(itemsets), percentComplete, output.Size())
+				index, len(itemsets), percentComplete, len(rules))
 		}
 		if len(itemset.itemset) < 2 {
 			continue
@@ -258,7 +173,7 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 				continue
 			}
 			if lift >= minLift {
-				output.Insert(NewRule(antecedent, consequent, support, confidence, lift))
+				rules = append(rules, NewRule(antecedent, consequent, support, confidence, lift))
 			}
 			candidates = append(candidates, consequent)
 		}
@@ -291,8 +206,7 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 					}
 					nextGen = append(nextGen, consequent)
 					if lift >= minLift {
-						rule := NewRule(antecedent, consequent, support, confidence, lift)
-						output.Insert(rule)
+						rules = append(rules, NewRule(antecedent, consequent, support, confidence, lift))
 					}
 				}
 			}
@@ -301,5 +215,5 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 		}
 	}
 
-	return output
+	return rules
 }

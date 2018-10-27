@@ -24,51 +24,20 @@ func ruleEquals(a *Rule, b *Rule) bool {
 	return itemSliceEquals(a.Antecedent, b.Antecedent) && itemSliceEquals(a.Consequent, b.Consequent)
 }
 
-func TestRuleSet(t *testing.T) {
-
-	ruleData := []Rule{
-		NewRule([]Item{1, 2, 3}, []Item{4, 5, 6}, 0.1, 0.2, 0.3),
-		NewRule([]Item{1, 2, 3}, []Item{4, 5, 6}, 0.1, 0.2, 0.3),
-		NewRule([]Item{1, 2, 3, 4}, []Item{5, 6}, 0.1, 0.2, 0.3),
-		NewRule([]Item{1, 2}, []Item{3, 4, 5, 6}, 0.1, 0.2, 0.3),
-	}
-
-	rs := NewRuleSet()
-	for _, r := range ruleData {
-		rs.Insert(r)
-	}
-
-	expectedRules := []Rule{
-		NewRule([]Item{1, 2, 3}, []Item{4, 5, 6}, 0.1, 0.2, 0.3),
-		NewRule([]Item{1, 2, 3, 4}, []Item{5, 6}, 0.1, 0.2, 0.3),
-		NewRule([]Item{1, 2}, []Item{3, 4, 5, 6}, 0.1, 0.2, 0.3),
-	}
-
-	foundRule := make([]bool, len(expectedRules))
-
-	for _, rule := range rs.Rules() {
-		found := false
-		for i, r := range expectedRules {
-			if ruleEquals(&r, &rule) {
-				if foundRule[i] {
-					t.Errorf("Duplicate find")
-				}
-				foundRule[i] = true
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("Mising rule!")
-		}
-	}
-}
-
 func TestWithout(t *testing.T) {
 	a, c := without([]Item{1, 2, 3}, Item(2))
 	if !itemSliceEquals(a, []Item{1, 3}) || !itemSliceEquals(c, []Item{2}) {
 		t.Error()
 	}
+}
+
+func find(rules []Rule, r *Rule) (*Rule, bool) {
+	for _, v := range rules {
+		if ruleEquals(r, &v) {
+			return &v, true
+		}
+	}
+	return nil, false
 }
 
 func TestGenerateRules(t *testing.T) {
@@ -171,16 +140,16 @@ func TestGenerateRules(t *testing.T) {
 	}
 
 	rules := generateRules(itemsets, 990002, 0.05, 1.5)
-	log.Printf("Generated %d rules", rules.Size())
-	for _, rule := range rules.Rules() {
+	log.Printf("Generated %d rules", len(rules))
+	for _, rule := range rules {
 		log.Print(rule)
 	}
-	if rules.Size() != len(expectedRules) {
+	if len(rules) != len(expectedRules) {
 		t.Error("Incorrect number of rules generated")
 	}
 
 	for _, expected := range expectedRules {
-		r, found := rules.Get(&expected)
+		r, found := find(rules, &expected)
 		if !found {
 			t.Error("expected rule not found, ", expected)
 			continue
