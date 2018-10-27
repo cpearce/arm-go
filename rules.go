@@ -15,7 +15,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"sort"
 	"time"
@@ -224,7 +223,16 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 	output := NewRuleSet()
 	itemsetSupport := createSupportLookup(itemsets, numTransactions)
 
-	for _, itemset := range itemsets {
+	lastFeedback := time.Now()
+
+	for index, itemset := range itemsets {
+		if time.Since(lastFeedback).Seconds() > 20 {
+			numRules := len(itemsets)
+			lastFeedback = time.Now()
+			percentComplete := int(float64(index)/float64(numRules)*100 + 0.5)
+			log.Printf("Progress: %d of %d itemsets processed (%d%%), generated %d rules so far",
+				index, len(itemsets), percentComplete, output.Size())
+		}
 		if len(itemset.itemset) < 2 {
 			continue
 		}
