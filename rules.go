@@ -243,10 +243,6 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 			candidates = append(candidates, consequent)
 		}
 		// Note: candidates should be sorted here.
-		isSorted := sort.SliceIsSorted(candidates, sliceOfItemSliceLessThan(candidates))
-		if !isSorted {
-			panic("Candidates slice isn't sorted!")
-		}
 
 		// Create subsequent generations by merging consequents which have size-1 items
 		// in common in the consequent.
