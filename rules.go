@@ -144,8 +144,15 @@ func prefixMatchLen(a []Item, b []Item) int {
 	return len(a)
 }
 
-func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) []Rule {
-	rules := make([]Rule, 0, 10000)
+func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) [][]Rule {
+	// Output rules are stored in a slice of slices. As we generate rules, we
+	// store them in a slice with capacity `chunkSize`. When the slice fills up,
+	// we append it to the output set. If we instead stuck all the rules in a
+	// single slice, we'd need to resize the slice as we append more rules, which
+	// is slow when we have a lot of rules in the slice.
+	output := make([][]Rule, 0)
+	const chunkSize int = 10000
+	rules := make([]Rule, 0, chunkSize)
 	itemsetSupport := createSupportLookup(itemsets, numTransactions)
 
 	lastFeedback := time.Now()
@@ -153,9 +160,8 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 	for index, itemset := range itemsets {
 		support := float64(itemset.count) / float64(numTransactions)
 		if time.Since(lastFeedback).Seconds() > 20 {
-			numRules := len(itemsets)
 			lastFeedback = time.Now()
-			percentComplete := int(float64(index)/float64(numRules)*100 + 0.5)
+			percentComplete := int(float64(index)/float64(countRules(output)+len(rules))*100 + 0.5)
 			log.Printf("Progress: %d of %d itemsets processed (%d%%), generated %d rules so far",
 				index, len(itemsets), percentComplete, len(rules))
 		}
@@ -173,6 +179,10 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 			}
 			if lift >= minLift {
 				rules = append(rules, NewRule(antecedent, consequent, support, confidence, lift))
+				if len(rules) == chunkSize {
+					output = append(output, rules)
+					rules = make([]Rule, 0, chunkSize)
+				}
 			}
 			candidates = append(candidates, consequent)
 		}
@@ -207,6 +217,10 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 					nextGen = append(nextGen, consequent)
 					if lift >= minLift {
 						rules = append(rules, NewRule(antecedent, consequent, support, confidence, lift))
+						if len(rules) == chunkSize {
+							output = append(output, rules)
+							rules = make([]Rule, 0, chunkSize)
+						}
 					}
 				}
 			}
@@ -215,5 +229,8 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 		}
 	}
 
-	return rules
+	if len(rules) > 0 {
+		output = append(output, rules)
+	}
+	return output
 }

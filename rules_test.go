@@ -31,10 +31,12 @@ func TestWithout(t *testing.T) {
 	}
 }
 
-func find(rules []Rule, r *Rule) (*Rule, bool) {
-	for _, v := range rules {
-		if ruleEquals(r, &v) {
-			return &v, true
+func find(rules [][]Rule, r *Rule) (*Rule, bool) {
+	for _, chunk := range rules {
+		for _, v := range chunk {
+			if ruleEquals(r, &v) {
+				return &v, true
+			}
 		}
 	}
 	return nil, false
@@ -144,7 +146,7 @@ func TestGenerateRules(t *testing.T) {
 	for _, rule := range rules {
 		log.Print(rule)
 	}
-	if len(rules) != len(expectedRules) {
+	if countRules(rules) != len(expectedRules) {
 		t.Error("Incorrect number of rules generated")
 	}
 

@@ -56,32 +56,42 @@ func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Ite
 	w.Flush()
 }
 
-func writeRules(rules []Rule, outputPath string, itemizer *Itemizer) {
+func writeRules(rules [][]Rule, outputPath string, itemizer *Itemizer) {
 	output, err := os.Create(outputPath)
 	check(err)
 	w := bufio.NewWriter(output)
 	fmt.Fprintln(w, "Antecedent => Consequent,Confidence,Lift,Support")
-	for _, rule := range rules {
-		first := true
-		for _, item := range rule.Antecedent {
-			if !first {
-				fmt.Fprintf(w, " ")
+	for _, chunk := range rules {
+		for _, rule := range chunk {
+			first := true
+			for _, item := range rule.Antecedent {
+				if !first {
+					fmt.Fprintf(w, " ")
+				}
+				first = false
+				fmt.Fprint(w, itemizer.toStr(item))
 			}
-			first = false
-			fmt.Fprint(w, itemizer.toStr(item))
-		}
-		fmt.Fprint(w, " => ")
-		first = true
-		for _, item := range rule.Consequent {
-			if !first {
-				fmt.Fprintf(w, " ")
+			fmt.Fprint(w, " => ")
+			first = true
+			for _, item := range rule.Consequent {
+				if !first {
+					fmt.Fprintf(w, " ")
+				}
+				first = false
+				fmt.Fprint(w, itemizer.toStr(item))
 			}
-			first = false
-			fmt.Fprint(w, itemizer.toStr(item))
+			fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
 		}
-		fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
 	}
 	w.Flush()
+}
+
+func countRules(rules [][]Rule) int {
+	n := 0
+	for _, chunk := range rules {
+		n += len(chunk)
+	}
+	return n
 }
 
 func countItems(path string) (*Itemizer, *itemCount, int) {
@@ -171,11 +181,11 @@ func main() {
 	log.Println("Generating association rules...")
 	start = time.Now()
 	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
-	log.Printf("Generated %d association rules in %s",
-		len(rules), time.Since(start))
+	numRules := countRules(rules)
+	log.Printf("Generated %d association rules in %s", numRules, time.Since(start))
 
 	start = time.Now()
 	log.Printf("Writing rules to '%s'...", args.output)
 	writeRules(rules, args.output, itemizer)
-	log.Printf("Wrote %d rules in %s", len(rules), time.Since(start))
+	log.Printf("Wrote %d rules in %s", numRules, time.Since(start))
 }
