@@ -15,6 +15,7 @@
 package main
 
 import (
+	"log"
 	"math"
 	"testing"
 )
@@ -182,6 +183,10 @@ func TestGenerateRules(t *testing.T) {
 	}
 
 	rules := generateRules(itemsets, 990002, 0.05, 1.5)
+	log.Printf("Generated %d rules", rules.Size())
+	for _, rule := range rules.Rules() {
+		log.Print(rule)
+	}
 	if rules.Size() != len(expectedRules) {
 		t.Error("Incorrect number of rules generated")
 	}
@@ -189,7 +194,8 @@ func TestGenerateRules(t *testing.T) {
 	for _, expected := range expectedRules {
 		r, found := rules.Get(&expected)
 		if !found {
-			t.Error("expected rule not found")
+			t.Error("expected rule not found, ", expected)
+			continue
 		}
 		if math.Abs(r.Support-expected.Support) > .001 {
 			t.Error("Support doesn't match for ", r)

@@ -125,3 +125,21 @@ func TestFPGrowth(t *testing.T) {
 		}
 	}
 }
+
+func TestSetMinus(t *testing.T) {
+	t.Log("TestSetMinus")
+	testCases := []testCase{
+		testCase{[]Item{1}, []Item{}, []Item{1}},
+		testCase{[]Item{}, []Item{1}, []Item{}},
+		testCase{[]Item{1, 2, 3}, []Item{1, 2, 3}, []Item{}},
+		testCase{[]Item{1, 2, 3}, []Item{1, 2}, []Item{3}},
+		testCase{[]Item{1, 2, 3}, []Item{2}, []Item{1, 3}},
+		testCase{[]Item{1, 2, 3}, []Item{3}, []Item{1, 2}},
+	}
+	for _, test := range testCases {
+		c := setMinus(test.a, test.b)
+		if !itemSliceEquals(c, test.c) {
+			t.Error("Fail: ", test.a, " minus ", test.b, " should be ", test.c, " got ", c)
+		}
+	}
+}

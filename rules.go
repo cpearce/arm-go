@@ -14,6 +14,10 @@
 
 package main
 
+import (
+	"sort"
+)
+
 // Rule represents an antecedent implies consequent rule, and stores its
 // support, confidence, and lift.
 type Rule struct {
@@ -179,6 +183,29 @@ func makeStats(a []Item, c []Item, supportLookup *itemsetSupportLookup) (float64
 	return acSup, confidence, lift
 }
 
+func sliceOfItemSliceLessThan(slices [][]Item) func(i, j int) bool {
+	return func(i, j int) bool {
+		a := slices[i]
+		b := slices[j]
+		if len(a) != len(b) {
+			panic("Mismatch in candidate generation!")
+		}
+		for idx := range a {
+			if a[idx] > b[idx] {
+				return false
+			}
+			if a[idx] < b[idx] {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func sortCandidates(candidates [][]Item) {
+	sort.SliceStable(candidates, sliceOfItemSliceLessThan(candidates))
+}
+
 func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) RuleSet {
 	output := NewRuleSet()
 	itemsetSupport := createSupportLookup(itemsets, numTransactions)
@@ -188,50 +215,52 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 			continue
 		}
 		// First generation is all possible rules with consequents of size 1.
-		candidates := NewRuleSet()
+		candidates := make([][]Item, 0)
 		for _, item := range itemset.itemset {
-			a, c := without(itemset.itemset, item)
-			support, confidence, lift := makeStats(a, c, itemsetSupport)
+			consequent := []Item{item}
+			antecedent := setMinus(itemset.itemset, consequent)
+			support, confidence, lift := makeStats(antecedent, consequent, itemsetSupport)
 			if confidence < minConfidence {
 				continue
 			}
-			candidates.Insert(NewRule(a, c, support, confidence, lift))
+			if lift >= minLift {
+				output.Insert(NewRule(antecedent, consequent, support, confidence, lift))
+			}
+			candidates = append(candidates, consequent)
 		}
-		// Create subsequent generations by merging rules which have size-1 items
+		// Note: candidates should be sorted here.
+		isSorted := sort.SliceIsSorted(candidates, sliceOfItemSliceLessThan(candidates))
+		if !isSorted {
+			panic("Candidates slice isn't sorted!")
+		}
+
+		// Create subsequent generations by merging consequents which have size-1 items
 		// in common in the consequent.
-		for len(candidates.Rules()) > 0 {
-			rules := candidates.Rules()
-			nextGen := NewRuleSet()
-			for idx1, r1 := range rules {
-				for idx2 := idx1 + 1; idx2 < len(rules); idx2++ {
-					r2 := rules[idx2]
-					if len(r1.Consequent) != len(r2.Consequent) {
-						continue
+		k := len(itemset.itemset) // size of frequent itemset
+		for len(candidates) > 0 && len(candidates[0])+1 < k {
+			nextGen := make([][]Item, 0)
+			for idx1, c1 := range candidates {
+				m := len(c1) // size of consequent.
+				for idx2 := idx1 + 1; idx2 < len(candidates); idx2++ {
+					if intersectionSize(c1, candidates[idx2]) != m-1 {
+						break
 					}
-					if intersectionSize(r1.Consequent, r2.Consequent) != len(r1.Consequent)-1 {
-						continue
-					}
-					antecedent := intersection(r1.Antecedent, r2.Antecedent)
-					if len(antecedent) == 0 {
-						continue
-					}
-					consequent := union(r1.Consequent, r2.Consequent)
-					if len(consequent) == 0 {
-						continue
-					}
+					consequent := union(c1, candidates[idx2])
+					antecedent := setMinus(itemset.itemset, consequent)
+
 					support, confidence, lift := makeStats(antecedent, consequent, itemsetSupport)
 					if confidence < minConfidence {
 						continue
 					}
-					nextGen.Insert(NewRule(antecedent, consequent, support, confidence, lift))
-				}
-			}
-			for _, rule := range candidates.Rules() {
-				if rule.Lift >= minLift {
-					output.Insert(rule)
+					nextGen = append(nextGen, consequent)
+					if lift >= minLift {
+						rule := NewRule(antecedent, consequent, support, confidence, lift)
+						output.Insert(rule)
+					}
 				}
 			}
 			candidates = nextGen
+			sortCandidates(candidates)
 		}
 	}
 

@@ -104,3 +104,27 @@ func intersectionSize(a []Item, b []Item) int {
 	}
 	return count
 }
+
+// Returns items in a that aren't in b.
+func setMinus(a []Item, b []Item) []Item {
+	c := make([]Item, 0, len(a))
+	ai := 0
+	bi := 0
+	for ai < len(a) && bi < len(b) {
+		if a[ai] < b[bi] {
+			c = append(c, a[ai])
+			ai++
+		} else if b[bi] < a[ai] {
+			panic("Tried to remove item that's not in set!")
+			bi++
+		} else {
+			ai++
+			bi++
+		}
+	}
+	for ai < len(a) {
+		c = append(c, a[ai])
+		ai++
+	}
+	return c
+}
