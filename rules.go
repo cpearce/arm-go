@@ -219,6 +219,18 @@ func sortCandidates(candidates [][]Item) {
 	sort.SliceStable(candidates, sliceOfItemSliceLessThan(candidates))
 }
 
+func prefixMatchLen(a []Item, b []Item) int {
+	if len(a) != len(b) {
+		panic("prefixMatch called on non-matching length slices")
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return i
+		}
+	}
+	return len(a)
+}
+
 func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) RuleSet {
 	output := NewRuleSet()
 	itemsetSupport := createSupportLookup(itemsets, numTransactions)
@@ -260,7 +272,14 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 			for idx1, c1 := range candidates {
 				m := len(c1) // size of consequent.
 				for idx2 := idx1 + 1; idx2 < len(candidates); idx2++ {
-					if intersectionSize(c1, candidates[idx2]) != m-1 {
+					c2 := candidates[idx2]
+					if prefixMatchLen(c1, c2) != m-1 {
+						// The candidates list contains only items of the same length.
+						// The candidates list is sorted, and each candidate is sorted.
+						// We're trying to merge two consequents which have m-1 items in
+						// common. So we can stop searching for c2 once our prefix no
+						// longer matches m-1 items, as since the list is sorted, we can't
+						// find any more matches after that.
 						break
 					}
 					consequent := union(c1, candidates[idx2])
