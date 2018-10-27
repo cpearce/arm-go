@@ -20,18 +20,6 @@ import (
 	"testing"
 )
 
-func itemSliceEquals(a []Item, b []Item) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func ruleEquals(a *Rule, b *Rule) bool {
 	return itemSliceEquals(a.Antecedent, b.Antecedent) && itemSliceEquals(a.Consequent, b.Consequent)
 }

@@ -15,7 +15,10 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"sort"
+	"time"
 )
 
 // Rule represents an antecedent implies consequent rule, and stores its
@@ -124,43 +127,49 @@ func (ruleSet *RuleSet) Get(rule *Rule) (*Rule, bool) {
 	return &ruleSet.rules[parent.index], true
 }
 
+type itemsetWithSupport struct {
+	itemset []Item
+	support float64
+}
+
+func (isl itemsetSupportLookup) Len() int {
+	return len(isl.itemsets)
+}
+
+func (isl *itemsetSupportLookup) Swap(i, j int) {
+	isl.itemsets[i], isl.itemsets[j] = isl.itemsets[j], isl.itemsets[i]
+}
+
+func (isl *itemsetSupportLookup) Less(i, j int) bool {
+	return itemSliceLess(isl.itemsets[i].itemset, isl.itemsets[j].itemset)
+}
+
 type itemsetSupportLookup struct {
-	children map[Item]*itemsetSupportLookup
-	support  float64
+	itemsets []itemsetWithSupport
 }
 
 func newItemsetSupportLookup() *itemsetSupportLookup {
 	return &itemsetSupportLookup{
-		children: make(map[Item]*itemsetSupportLookup),
+		itemsets: make([]itemsetWithSupport, 0),
 	}
 }
 
 func (isl *itemsetSupportLookup) insert(itemset []Item, support float64) {
-	parent := isl
-	for _, item := range itemset {
-		node, found := parent.children[item]
-		if !found {
-			node = newItemsetSupportLookup()
-			parent.children[item] = node
-		}
-		parent = node
-	}
-	if parent.support != 0.0 {
-		panic("Duplicate insertion")
-	}
-	parent.support = support
+	isl.itemsets = append(isl.itemsets, itemsetWithSupport{itemset: itemset, support: support})
+}
+
+func (isl *itemsetSupportLookup) sort() {
+	sort.Sort(isl)
 }
 
 func (isl *itemsetSupportLookup) lookup(itemset []Item) float64 {
-	parent := isl
-	for _, item := range itemset {
-		node, found := parent.children[item]
-		if !found {
-			panic("Lookup of itemset not in itemsetSupportLookup!")
-		}
-		parent = node
+	idx := sort.Search(len(isl.itemsets), func(idx int) bool {
+		return !itemSliceLess(isl.itemsets[idx].itemset, itemset)
+	})
+	if !itemSliceEquals(isl.itemsets[idx].itemset, itemset) {
+		panic("Failed to retrieve itemset support")
 	}
-	return parent.support
+	return isl.itemsets[idx].support
 }
 
 func createSupportLookup(itemsets []itemsetWithCount, numTransactions int) *itemsetSupportLookup {
@@ -169,6 +178,7 @@ func createSupportLookup(itemsets []itemsetWithCount, numTransactions int) *item
 	for _, is := range itemsets {
 		isl.insert(is.itemset, float64(is.count)/f)
 	}
+	isl.sort()
 
 	return isl
 }
@@ -183,22 +193,26 @@ func makeStats(a []Item, c []Item, supportLookup *itemsetSupportLookup) (float64
 	return acSup, confidence, lift
 }
 
+func itemSliceLess(a, b []Item) bool {
+	if len(a) < len(b) {
+		return true
+	} else if len(a) > len(b) {
+		return false
+	}
+	for idx := range a {
+		if a[idx] > b[idx] {
+			return false
+		}
+		if a[idx] < b[idx] {
+			return true
+		}
+	}
+	return false
+}
+
 func sliceOfItemSliceLessThan(slices [][]Item) func(i, j int) bool {
 	return func(i, j int) bool {
-		a := slices[i]
-		b := slices[j]
-		if len(a) != len(b) {
-			panic("Mismatch in candidate generation!")
-		}
-		for idx := range a {
-			if a[idx] > b[idx] {
-				return false
-			}
-			if a[idx] < b[idx] {
-				return true
-			}
-		}
-		return false
+		return itemSliceLess(slices[i], slices[j])
 	}
 }
 

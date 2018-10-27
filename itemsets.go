@@ -28,6 +28,18 @@ func max(x, y int) int {
 	return y
 }
 
+func itemSliceEquals(a []Item, b []Item) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func intersection(a []Item, b []Item) []Item {
 	c := make([]Item, 0, min(len(a), len(b)))
 	ap := 0
