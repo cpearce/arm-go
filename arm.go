@@ -66,8 +66,8 @@ func writeRules(rules RuleSet, outputPath string, itemizer *Itemizer) {
 		for _, item := range rule.Antecedent {
 			if !first {
 				fmt.Fprintf(w, " ")
-				first = false
 			}
+			first = false
 			fmt.Fprint(w, itemizer.toStr(item))
 		}
 		fmt.Fprint(w, " => ")
@@ -75,8 +75,8 @@ func writeRules(rules RuleSet, outputPath string, itemizer *Itemizer) {
 		for _, item := range rule.Consequent {
 			if !first {
 				fmt.Fprintf(w, " ")
-				first = false
 			}
+			first = false
 			fmt.Fprint(w, itemizer.toStr(item))
 		}
 		fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
