@@ -199,7 +199,7 @@ func worker(fromMaster <-chan workerTask, toMaster chan<- masterTask, output cha
 
 func parallelFpGrowth(tree *fpTree, minCount int) []itemsetWithCount {
 	output := make(chan itemsetWithCount)
-	c := make(chan []itemsetWithCount)
+	c := make(chan []itemsetWithCount, 100000)
 	go func() {
 		itemsets := make([]itemsetWithCount, 0)
 		for iwc := range output {
@@ -209,9 +209,9 @@ func parallelFpGrowth(tree *fpTree, minCount int) []itemsetWithCount {
 		close(c)
 	}()
 
-	mc := make(chan masterTask, 100)
-	wc := make(chan workerTask, 100)
-	for i := 0; i < 4; i++ {
+	mc := make(chan masterTask, 10000)
+	wc := make(chan workerTask, 10000)
+	for i := 0; i < 28; i++ {
 		go worker(wc, mc, output, minCount)
 	}
 
