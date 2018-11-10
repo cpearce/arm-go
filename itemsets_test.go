@@ -15,6 +15,7 @@
 package main
 
 import (
+	"math"
 	"testing"
 )
 
@@ -114,7 +115,9 @@ func TestFPGrowth(t *testing.T) {
 
 	input := "datasets/kosarak.csv"
 	itemizer, frequency, numTransactions := countItems(input)
-	itemsets := generateFrequentItemsets(input, 0.05, itemizer, frequency, numTransactions)
+	minCount := max(1, int(math.Ceil(0.05*float64(numTransactions))))
+	tree := buildInitialFpTree(input, itemizer, frequency, minCount)
+	itemsets := parallelFpGrowth(tree, minCount)
 
 	if len(itemsets) != len(expectedItemsets) {
 		t.Error("Result=")
