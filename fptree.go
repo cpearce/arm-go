@@ -121,16 +121,31 @@ func appendSorted(itemset []Item, item Item) []Item {
 	return xs
 }
 
+func makeConditionalTree(tree *fpTree, itemList []*fpNode) *fpTree {
+	conditionalTree := newTree()
+	for _, leaf := range itemList {
+		transaction := pathFromRootToExcluding(leaf)
+		conditionalTree.Insert(transaction, leaf.count)
+	}
+	return conditionalTree
+}
+
+/*
+Have a master goroutine. it maintains a queue of (tree,itemList,index) jobs.
+Workers msg master when workers need more work. Master selects the best job and
+fires work back, or a closeOp if there's no work. When workers complete a task,
+they send the result to the aggregator. Instead of recursing, when a worker has
+created a conditional tree, it sends the tree to the master, who will push it
+to the front of its task queue. So other workers will receive jobs from that
+tree first.
+*/
+
 func fpGrowth(tree *fpTree, itemset []Item, minCount int, itemsetAggregateChan chan itemsetWithCount) {
 	for item, itemList := range tree.itemList {
 		if tree.counts.get(item) < minCount {
 			continue
 		}
-		conditionalTree := newTree()
-		for _, leaf := range itemList {
-			transaction := pathFromRootToExcluding(leaf)
-			conditionalTree.Insert(transaction, leaf.count)
-		}
+		conditionalTree := makeConditionalTree(tree, itemList)
 		path := appendSorted(itemset, item)
 		itemsetAggregateChan <- itemsetWithCount{
 			itemset: path,
