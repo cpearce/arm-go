@@ -21,13 +21,14 @@ import (
 )
 
 type arguments struct {
-	input         string
-	output        string
-	minSupport    float64
-	minConfidence float64
-	minLift       float64
-	itemsetsPath  string
-	profile       bool
+	input          string
+	output         string
+	minSupport     float64
+	minConfidence  float64
+	minLift        float64
+	itemsetsPath   string
+	profile        bool
+	singleThreaded bool
 }
 
 const usage = `Arguments:
@@ -43,6 +44,7 @@ const usage = `Arguments:
   --itemsets file_path  File path in which to store generated itemsets
                         (optional).
   --profile             Enables profiling via 'profile' package (optional).
+  --single-threaded     Runs in single-threaded mode (optional).
 `
 
 func parseArgsOrDie() arguments {
@@ -136,6 +138,10 @@ func parseArgsOrDie() arguments {
 		case "--profile":
 			{
 				result.profile = true
+			}
+		case "--single-threaded":
+			{
+				result.singleThreaded = true
 			}
 		}
 	}

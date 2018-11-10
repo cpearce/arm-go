@@ -276,8 +276,12 @@ func main() {
 
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
-	itemsWithCount := parallelFpGrowth(tree, minCount)
-	// itemsWithCount := fpGrowth(tree, make([]Item, 0), minCount)
+	var itemsWithCount []itemsetWithCount
+	if args.singleThreaded {
+		itemsWithCount = fpGrowth(tree, make([]Item, 0), minCount)
+	} else {
+		itemsWithCount = parallelFpGrowth(tree, minCount)
+	}
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
