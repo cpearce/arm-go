@@ -140,17 +140,20 @@ to the front of its task queue. So other workers will receive jobs from that
 tree first.
 */
 
-func fpGrowth(tree *fpTree, itemset []Item, minCount int, itemsetAggregateChan chan itemsetWithCount) {
+func fpGrowth(tree *fpTree, itemset []Item, minCount int) []itemsetWithCount {
+	itemsets := make([]itemsetWithCount, 0)
 	for item, itemList := range tree.itemList {
 		if tree.counts.get(item) < minCount {
 			continue
 		}
 		conditionalTree := makeConditionalTree(tree, itemList)
 		path := appendSorted(itemset, item)
-		itemsetAggregateChan <- itemsetWithCount{
+		itemsets = append(itemsets, itemsetWithCount{
 			itemset: path,
 			count:   conditionalTree.root.count,
-		}
-		fpGrowth(conditionalTree, path, minCount, itemsetAggregateChan)
+		})
+		x := fpGrowth(conditionalTree, path, minCount)
+		itemsets = append(itemsets, x...)
 	}
+	return itemsets
 }

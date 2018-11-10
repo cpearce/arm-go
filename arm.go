@@ -20,6 +20,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -211,7 +212,7 @@ func parallelFpGrowth(tree *fpTree, minCount int) []itemsetWithCount {
 
 	mc := make(chan masterTask, 10000)
 	wc := make(chan workerTask, 10000)
-	for i := 0; i < 28; i++ {
+	for i := 0; i < runtime.NumCPU(); i++ {
 		go worker(wc, mc, output, minCount)
 	}
 
@@ -221,12 +222,10 @@ func parallelFpGrowth(tree *fpTree, minCount int) []itemsetWithCount {
 	return <-c
 }
 
-func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) []itemsetWithCount {
+func buildInitialFpTree(path string, itemizer *Itemizer, frequency *itemCount, minCount int) *fpTree {
 	file, err := os.Open(path)
 	check(err)
 	defer file.Close()
-
-	minCount := max(1, int(math.Ceil(minSupport*float64(numTransactions))))
 
 	scanner := bufio.NewScanner(file)
 	tree := newTree()
@@ -253,7 +252,7 @@ func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemize
 	}
 	check(scanner.Err())
 
-	return parallelFpGrowth(tree, minCount)
+	return tree
 }
 
 func main() {
@@ -269,10 +268,16 @@ func main() {
 	itemizer, frequency, numTransactions := countItems(args.input)
 	log.Printf("First pass finished in %s", time.Since(start))
 
+	log.Println("Building initial FPTree...")
+	minCount := max(1, int(math.Ceil(args.minSupport*float64(numTransactions))))
+	start = time.Now()
+	tree := buildInitialFpTree(args.input, itemizer, frequency, minCount)
+	log.Printf("Generated initial FPTree in %s", time.Since(start))
+
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
-
-	itemsWithCount := generateFrequentItemsets(args.input, args.minSupport, itemizer, frequency, numTransactions)
+	itemsWithCount := parallelFpGrowth(tree, minCount)
+	// itemsWithCount := fpGrowth(tree, make([]Item, 0), minCount)
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
