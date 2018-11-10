@@ -12,13 +12,22 @@
       "program": "${workspaceFolder}"
     },
     {
-      "name": "Launch",
+      "name": "UCI-Zoo",
       "type": "go",
       "request": "launch",
       "mode": "auto",
       "program": "${workspaceFolder}/arm.go",
       "env": {},
-      "args": []
+      "args": ["--min-support","0.3","--min-confidence","0.01","--input","/Users/CPearce/src/arm-rs/datasets/UCI-zoo.csv","--output","rules"]
+    },
+    {
+      "name": "Kosarak",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/arm.go",
+      "env": {},
+      "args": ["--min-support","0.01","--min-confidence","0.01","--input","/Users/CPearce/src/arm-rs/datasets/kosarak.csv","--output","rules"]
     }
   ]
 }
