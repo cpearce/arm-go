@@ -148,7 +148,20 @@ func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemize
 	}
 	check(scanner.Err())
 
-	return fpGrowth(tree, make([]Item, 0), minCount)
+	itemsetAggregateChan := make(chan itemsetWithCount)
+	c := make(chan []itemsetWithCount)
+	go func() {
+		itemsets := make([]itemsetWithCount, 0)
+		for iwc := range itemsetAggregateChan {
+			itemsets = append(itemsets, iwc)
+		}
+		c <- itemsets
+		close(c)
+	}()
+
+	fpGrowth(tree, make([]Item, 0), minCount, itemsetAggregateChan)
+	close(itemsetAggregateChan)
+	return <-c
 }
 
 func main() {

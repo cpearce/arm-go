@@ -121,8 +121,7 @@ func appendSorted(itemset []Item, item Item) []Item {
 	return xs
 }
 
-func fpGrowth(tree *fpTree, itemset []Item, minCount int) []itemsetWithCount {
-	itemsets := make([]itemsetWithCount, 0)
+func fpGrowth(tree *fpTree, itemset []Item, minCount int, itemsetAggregateChan chan itemsetWithCount) {
 	for item, itemList := range tree.itemList {
 		if tree.counts.get(item) < minCount {
 			continue
@@ -133,12 +132,10 @@ func fpGrowth(tree *fpTree, itemset []Item, minCount int) []itemsetWithCount {
 			conditionalTree.Insert(transaction, leaf.count)
 		}
 		path := appendSorted(itemset, item)
-		itemsets = append(itemsets, itemsetWithCount{
+		itemsetAggregateChan <- itemsetWithCount{
 			itemset: path,
 			count:   conditionalTree.root.count,
-		})
-		x := fpGrowth(conditionalTree, path, minCount)
-		itemsets = append(itemsets, x...)
+		}
+		fpGrowth(conditionalTree, path, minCount, itemsetAggregateChan)
 	}
-	return itemsets
 }
