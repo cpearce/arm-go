@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Modified by Nokia.
+// Modified by Nokia into an importable package.
 
-package main
+package arm
 
 type Arguments struct {
 	// Input dataset in CSV format.

@@ -13,9 +13,9 @@ see Chapter 5 of Introduction to Data Mining, Kumar et al:
 [Association Analysis: Basic Concepts and Algorithms](https://www-users.cs.umn.edu/~kumar001/dmbook/ch5_association_analysis.pdf).
 
 To build, [download and install Go](https://golang.org/dl/) and clone this
-repository to $GO_PATH/src/arm-go, and build with:
+repository, and build with:
 ```
-  $ go build arm-go
+  $ go build ./cmd/arm-go
 ```
 You can then run from the command line, for example:
 ```
