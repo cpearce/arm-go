@@ -152,10 +152,8 @@ func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemize
 	return fpGrowth(tree, make([]Item, 0), minCount)
 }
 
-func main() {
+func MineAssociationRules(args Arguments) {
 	log.Println("Association Rule Mining - in Go via FPGrowth")
-
-	args := parseArgsOrDie()
 
 	log.Println("First pass, counting Item frequencies...")
 	start := time.Now()
