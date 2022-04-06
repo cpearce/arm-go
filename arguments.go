@@ -1,4 +1,5 @@
 // Copyright 2018 Chris Pearce
+// Copyright 2022 Nokia
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,6 +12,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modified by Nokia.
 
 package main
 
@@ -27,7 +30,6 @@ type arguments struct {
 	minConfidence float64
 	minLift       float64
 	itemsetsPath  string
-	profile       bool
 }
 
 const usage = `Arguments:
@@ -42,7 +44,6 @@ const usage = `Arguments:
                         [1,∞] (optional).
   --itemsets file_path  File path in which to store generated itemsets
                         (optional).
-  --profile             Enables profiling via 'profile' package (optional).
 `
 
 func parseArgsOrDie() arguments {
@@ -132,10 +133,6 @@ func parseArgsOrDie() arguments {
 				}
 				result.minLift = f
 				i++
-			}
-		case "--profile":
-			{
-				result.profile = true
 			}
 		}
 	}
