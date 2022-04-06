@@ -41,7 +41,9 @@ const usage = `Arguments:
 
 func main() {
 	args := parseArgsOrDie()
-	arm.MineAssociationRules(args)
+	if err := arm.MineAssociationRules(args); err != nil {
+		panic(err)
+	}
 }
 
 func parseArgsOrDie() arm.Arguments {

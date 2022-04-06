@@ -115,8 +115,8 @@ func TestFPGrowth(t *testing.T) {
 	}
 
 	input := "datasets/kosarak.csv"
-	itemizer, frequency, numTransactions := countItems(input)
-	itemsets := generateFrequentItemsets(input, 0.05, itemizer, frequency, numTransactions)
+	itemizer, frequency, numTransactions, _ := countItems(input)
+	itemsets, _ := generateFrequentItemsets(input, 0.05, itemizer, frequency, numTransactions)
 
 	if len(itemsets) != len(expectedItemsets) {
 		t.Error("Result=")
