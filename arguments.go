@@ -17,6 +17,14 @@
 
 package arm
 
+import "errors"
+
+var (
+	ErrMinSupportOutOfRange    = errors.New("MinSupport value is out of range [0,1.0].")
+	ErrMinConfidenceOutOfRange = errors.New("MinConfidence value is out of range [0,1.0].")
+	ErrMinLiftOutOfRange       = errors.New("MinLift is out of range [1.0,∞].")
+)
+
 type Arguments struct {
 	// Input dataset in CSV format.
 	Input string
@@ -33,4 +41,17 @@ type Arguments struct {
 	// File path in which to store generated itemsets
 	// (optional).
 	ItemsetsPath string
+}
+
+func (args Arguments) Validate() error {
+	if args.MinSupport < 0.0 || args.MinSupport > 1.0 {
+		return ErrMinSupportOutOfRange
+	}
+	if args.MinConfidence < 0.0 || args.MinConfidence > 1.0 {
+		return ErrMinConfidenceOutOfRange
+	}
+	if args.MinLift != 0.0 && args.MinLift < 1.0 {
+		return ErrMinLiftOutOfRange
+	}
+	return nil
 }
