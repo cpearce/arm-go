@@ -159,31 +159,31 @@ func main() {
 
 	log.Println("First pass, counting Item frequencies...")
 	start := time.Now()
-	itemizer, frequency, numTransactions := countItems(args.input)
+	itemizer, frequency, numTransactions := countItems(args.Input)
 	log.Printf("First pass finished in %s", time.Since(start))
 
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
 
-	itemsWithCount := generateFrequentItemsets(args.input, args.minSupport, itemizer, frequency, numTransactions)
+	itemsWithCount := generateFrequentItemsets(args.Input, args.MinSupport, itemizer, frequency, numTransactions)
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
-	if len(args.itemsetsPath) > 0 {
-		log.Printf("Writing itemsets to '%s'\n", args.itemsetsPath)
+	if len(args.ItemsetsPath) > 0 {
+		log.Printf("Writing itemsets to '%s'\n", args.ItemsetsPath)
 		start := time.Now()
-		writeItemsets(itemsWithCount, args.itemsetsPath, itemizer, numTransactions)
+		writeItemsets(itemsWithCount, args.ItemsetsPath, itemizer, numTransactions)
 		log.Printf("Wrote %d itemsets in %s", len(itemsWithCount), time.Since(start))
 	}
 
 	log.Println("Generating association rules...")
 	start = time.Now()
-	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
+	rules := generateRules(itemsWithCount, numTransactions, args.MinConfidence, args.MinLift)
 	numRules := countRules(rules)
 	log.Printf("Generated %d association rules in %s", numRules, time.Since(start))
 
 	start = time.Now()
-	log.Printf("Writing rules to '%s'...", args.output)
-	writeRules(rules, args.output, itemizer)
+	log.Printf("Writing rules to '%s'...", args.Output)
+	writeRules(rules, args.Output, itemizer)
 	log.Printf("Wrote %d rules in %s", numRules, time.Since(start))
 }
