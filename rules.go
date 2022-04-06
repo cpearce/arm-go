@@ -17,7 +17,6 @@
 package arm
 
 import (
-	"log"
 	"sort"
 	"time"
 )
@@ -146,7 +145,7 @@ func prefixMatchLen(a []Item, b []Item) int {
 	return len(a)
 }
 
-func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) [][]Rule {
+func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64, log Logger) [][]Rule {
 	// Output rules are stored in a slice of slices. As we generate rules, we
 	// store them in a slice with capacity `chunkSize`. When the slice fills up,
 	// we append it to the output set. If we instead stuck all the rules in a

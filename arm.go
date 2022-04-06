@@ -20,7 +20,6 @@ package arm
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"sort"
@@ -30,6 +29,11 @@ import (
 
 // Item represents an item.
 type Item int
+
+type Logger interface {
+	Println(...interface{})
+	Printf(string, ...interface{})
+}
 
 func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) error {
 	output, err := os.Create(outputPath)
@@ -182,7 +186,7 @@ func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemize
 	return fpGrowth(tree, make([]Item, 0), minCount), nil
 }
 
-func MineAssociationRules(args Arguments) error {
+func MineAssociationRules(args Arguments, log Logger) error {
 	log.Println("Association Rule Mining - in Go via FPGrowth")
 
 	if err := args.Validate(); err != nil {
@@ -216,7 +220,7 @@ func MineAssociationRules(args Arguments) error {
 
 	log.Println("Generating association rules...")
 	start = time.Now()
-	rules := generateRules(itemsWithCount, numTransactions, args.MinConfidence, args.MinLift)
+	rules := generateRules(itemsWithCount, numTransactions, args.MinConfidence, args.MinLift, log)
 	numRules := countRules(rules)
 	log.Printf("Generated %d association rules in %s", numRules, time.Since(start))
 

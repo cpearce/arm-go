@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -41,7 +42,7 @@ const usage = `Arguments:
 
 func main() {
 	args := parseArgsOrDie()
-	if err := arm.MineAssociationRules(args); err != nil {
+	if err := arm.MineAssociationRules(args, log.Default()); err != nil {
 		panic(err)
 	}
 }

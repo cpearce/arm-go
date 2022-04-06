@@ -143,7 +143,7 @@ func TestGenerateRules(t *testing.T) {
 		Rule{[]Item{11, 148}, []Item{6, 218}, 0.050, 0.894, 11.398},
 	}
 
-	rules := generateRules(itemsets, 990002, 0.05, 1.5)
+	rules := generateRules(itemsets, 990002, 0.05, 1.5, log.Default())
 	log.Printf("Generated %d rules", len(rules))
 	for _, rule := range rules {
 		log.Print(rule)
