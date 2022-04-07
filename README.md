@@ -1,8 +1,10 @@
 # arm-go
-[![Build Status](https://travis-ci.org/cpearce/arm-go.svg?branch=master)](https://travis-ci.org/cpearce/arm-go)
-
 An implementation of FPGrowth frequent pattern generation algorithm,
 along with association rule generation, in Go.
+
+Original code by Chris Pearce, https://github.com/cpearce/arm-go.
+
+Modified by Nokia into an importable package.
 
 This finds relationships of the form "people who buy X also buy Y",
 and also determines the strengths (confidence, lift, support) of those
@@ -13,9 +15,9 @@ see Chapter 5 of Introduction to Data Mining, Kumar et al:
 [Association Analysis: Basic Concepts and Algorithms](https://www-users.cs.umn.edu/~kumar001/dmbook/ch5_association_analysis.pdf).
 
 To build, [download and install Go](https://golang.org/dl/) and clone this
-repository to $GO_PATH/src/arm-go, and build with:
+repository, and build with:
 ```
-  $ go build arm-go
+  $ go build ./cmd/arm-go
 ```
 You can then run from the command line, for example:
 ```
@@ -29,4 +31,31 @@ You can then run from the command line, for example:
 To run unit tests:
 ```
   $ go test
+```
+
+To use as a library, import `github.com/nokia/arm-go`,
+set up `arm.Arguments`, and call `arm.MineAssociationRules`.
+For example:
+```go
+package main
+
+import (
+    "log"
+
+    "github.com/nokia/arm-go"
+)
+
+func main() {
+    args := arm.Arguments{
+        Input:         "datasets/kosarak.csv",
+        Output:        "rules",
+        MinSupport:    0.05,
+        MinConfidence: 0.05,
+        MinLift:       1.5,
+        ItemsetsPath:  "itemsets",
+    }
+    if err := arm.MineAssociationRules(args, log.Default()); err != nil {
+        panic(err)
+    }
+}
 ```

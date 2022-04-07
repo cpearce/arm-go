@@ -11,8 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modified by Nokia into an importable package.
 
-package main
+package arm
 
 import (
 	"testing"
@@ -113,8 +115,8 @@ func TestFPGrowth(t *testing.T) {
 	}
 
 	input := "datasets/kosarak.csv"
-	itemizer, frequency, numTransactions := countItems(input)
-	itemsets := generateFrequentItemsets(input, 0.05, itemizer, frequency, numTransactions)
+	itemizer, frequency, numTransactions, _ := countItems(input)
+	itemsets, _ := generateFrequentItemsets(input, 0.05, itemizer, frequency, numTransactions)
 
 	if len(itemsets) != len(expectedItemsets) {
 		t.Error("Result=")

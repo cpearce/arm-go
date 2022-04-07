@@ -1,4 +1,5 @@
 // Copyright 2018 Chris Pearce
+// Copyright 2022 Nokia
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,79 +12,105 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modified by Nokia into an importable package.
 
-package main
+package arm
 
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/pkg/profile"
 )
 
 // Item represents an item.
 type Item int
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
+type Logger interface {
+	Println(...interface{})
+	Printf(string, ...interface{})
 }
 
-func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) {
+func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) error {
 	output, err := os.Create(outputPath)
-	check(err)
+	if err != nil {
+		return err
+	}
+	defer output.Close()
 	w := bufio.NewWriter(output)
-	fmt.Fprintln(w, "Itemset,Support")
+	if _, err := fmt.Fprintln(w, "Itemset,Support"); err != nil {
+		return err
+	}
 	n := float64(numTransactions)
 	for _, iwc := range itemsets {
 		first := true
 		for _, item := range iwc.itemset {
 			if !first {
-				fmt.Fprintf(w, " ")
+				if _, err := fmt.Fprintf(w, " "); err != nil {
+					return err
+				}
 			}
 			first = false
-			fmt.Fprint(w, itemizer.toStr(item))
+			if _, err := fmt.Fprint(w, itemizer.toStr(item)); err != nil {
+				return err
+			}
 		}
-		fmt.Fprintf(w, " %f\n", float64(iwc.count)/n)
+		if _, err := fmt.Fprintf(w, " %f\n", float64(iwc.count)/n); err != nil {
+			return err
+		}
 	}
-	w.Flush()
+	return w.Flush()
 }
 
-func writeRules(rules [][]Rule, outputPath string, itemizer *Itemizer) {
+func writeRules(rules [][]Rule, outputPath string, itemizer *Itemizer) error {
 	output, err := os.Create(outputPath)
-	check(err)
+	if err != nil {
+		return err
+	}
+	defer output.Close()
 	w := bufio.NewWriter(output)
-	fmt.Fprintln(w, "Antecedent => Consequent,Confidence,Lift,Support")
+	if _, err := fmt.Fprintln(w, "Antecedent => Consequent,Confidence,Lift,Support"); err != nil {
+		return err
+	}
 	for _, chunk := range rules {
 		for _, rule := range chunk {
 			first := true
 			for _, item := range rule.Antecedent {
 				if !first {
-					fmt.Fprintf(w, " ")
+					if _, err := fmt.Fprintf(w, " "); err != nil {
+						return err
+					}
 				}
 				first = false
-				fmt.Fprint(w, itemizer.toStr(item))
+				if _, err := fmt.Fprint(w, itemizer.toStr(item)); err != nil {
+					return err
+				}
 			}
-			fmt.Fprint(w, " => ")
+			if _, err := fmt.Fprint(w, " => "); err != nil {
+				return err
+			}
 			first = true
 			for _, item := range rule.Consequent {
 				if !first {
-					fmt.Fprintf(w, " ")
+					if _, err := fmt.Fprintf(w, " "); err != nil {
+						return err
+					}
 				}
 				first = false
-				fmt.Fprint(w, itemizer.toStr(item))
+				if _, err := fmt.Fprint(w, itemizer.toStr(item)); err != nil {
+					return err
+				}
 			}
-			fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
+			if _, err := fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support); err != nil {
+				return err
+			}
 		}
 	}
-	w.Flush()
+	return w.Flush()
 }
 
 func countRules(rules [][]Rule) int {
@@ -94,9 +121,11 @@ func countRules(rules [][]Rule) int {
 	return n
 }
 
-func countItems(path string) (*Itemizer, *itemCount, int) {
+func countItems(path string) (*Itemizer, *itemCount, int, error) {
 	file, err := os.Open(path)
-	check(err)
+	if err != nil {
+		return nil, nil, 0, err
+	}
 	defer file.Close()
 
 	frequency := makeCounts()
@@ -112,13 +141,17 @@ func countItems(path string) (*Itemizer, *itemCount, int) {
 				frequency.increment(item, 1)
 			})
 	}
-	check(scanner.Err())
-	return &itemizer, &frequency, numTransactions
+	if err := scanner.Err(); err != nil {
+		return nil, nil, 0, err
+	}
+	return &itemizer, &frequency, numTransactions, nil
 }
 
-func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) []itemsetWithCount {
+func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) ([]itemsetWithCount, error) {
 	file, err := os.Open(path)
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 	defer file.Close()
 
 	minCount := max(1, int(math.Ceil(minSupport*float64(numTransactions))))
@@ -146,46 +179,55 @@ func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemize
 		})
 		tree.Insert(transaction, 1)
 	}
-	check(scanner.Err())
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
 
-	return fpGrowth(tree, make([]Item, 0), minCount)
+	return fpGrowth(tree, make([]Item, 0), minCount), nil
 }
 
-func main() {
+func MineAssociationRules(args Arguments, log Logger) error {
 	log.Println("Association Rule Mining - in Go via FPGrowth")
 
-	args := parseArgsOrDie()
-	if args.profile {
-		defer profile.Start().Stop()
+	if err := args.Validate(); err != nil {
+		return err
 	}
 
 	log.Println("First pass, counting Item frequencies...")
 	start := time.Now()
-	itemizer, frequency, numTransactions := countItems(args.input)
+	itemizer, frequency, numTransactions, err := countItems(args.Input)
+	if err != nil {
+		return err
+	}
 	log.Printf("First pass finished in %s", time.Since(start))
 
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
 
-	itemsWithCount := generateFrequentItemsets(args.input, args.minSupport, itemizer, frequency, numTransactions)
+	itemsWithCount, err := generateFrequentItemsets(args.Input, args.MinSupport, itemizer, frequency, numTransactions)
+	if err != nil {
+		return err
+	}
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
-	if len(args.itemsetsPath) > 0 {
-		log.Printf("Writing itemsets to '%s'\n", args.itemsetsPath)
+	if len(args.ItemsetsPath) > 0 {
+		log.Printf("Writing itemsets to '%s'\n", args.ItemsetsPath)
 		start := time.Now()
-		writeItemsets(itemsWithCount, args.itemsetsPath, itemizer, numTransactions)
+		writeItemsets(itemsWithCount, args.ItemsetsPath, itemizer, numTransactions)
 		log.Printf("Wrote %d itemsets in %s", len(itemsWithCount), time.Since(start))
 	}
 
 	log.Println("Generating association rules...")
 	start = time.Now()
-	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
+	rules := generateRules(itemsWithCount, numTransactions, args.MinConfidence, args.MinLift, log)
 	numRules := countRules(rules)
 	log.Printf("Generated %d association rules in %s", numRules, time.Since(start))
 
 	start = time.Now()
-	log.Printf("Writing rules to '%s'...", args.output)
-	writeRules(rules, args.output, itemizer)
+	log.Printf("Writing rules to '%s'...", args.Output)
+	writeRules(rules, args.Output, itemizer)
 	log.Printf("Wrote %d rules in %s", numRules, time.Since(start))
+
+	return nil
 }

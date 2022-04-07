@@ -11,8 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// Modified by Nokia into an importable package.
 
-package main
+package arm
 
 import (
 	"log"
@@ -141,7 +143,7 @@ func TestGenerateRules(t *testing.T) {
 		Rule{[]Item{11, 148}, []Item{6, 218}, 0.050, 0.894, 11.398},
 	}
 
-	rules := generateRules(itemsets, 990002, 0.05, 1.5)
+	rules := generateRules(itemsets, 990002, 0.05, 1.5, log.Default())
 	log.Printf("Generated %d rules", len(rules))
 	for _, rule := range rules {
 		log.Print(rule)
