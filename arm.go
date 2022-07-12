@@ -14,12 +14,14 @@
 // limitations under the License.
 //
 // Modified by Nokia into an importable package.
+// Modified by Nokia to support custom reader and writer
 
 package arm
 
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"sort"
@@ -35,8 +37,8 @@ type Logger interface {
 	Printf(string, ...interface{})
 }
 
-func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) error {
-	output, err := os.Create(outputPath)
+func writeItemsets(itemsets []itemsetWithCount, itemsetsWriter ItemsetsWriter, itemizer *Itemizer, numTransactions int) error {
+	output, err := itemsetsWriter()
 	if err != nil {
 		return err
 	}
@@ -66,8 +68,8 @@ func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Ite
 	return w.Flush()
 }
 
-func writeRules(rules [][]Rule, outputPath string, itemizer *Itemizer) error {
-	output, err := os.Create(outputPath)
+func writeRules(rules [][]Rule, rulesWriter RulesWriter, itemizer *Itemizer) error {
+	output, err := rulesWriter()
 	if err != nil {
 		return err
 	}
@@ -121,8 +123,8 @@ func countRules(rules [][]Rule) int {
 	return n
 }
 
-func countItems(path string) (*Itemizer, *itemCount, int, error) {
-	file, err := os.Open(path)
+func countItems(itemsReader ItemsReader) (*Itemizer, *itemCount, int, error) {
+	file, err := itemsReader()
 	if err != nil {
 		return nil, nil, 0, err
 	}
@@ -147,8 +149,8 @@ func countItems(path string) (*Itemizer, *itemCount, int, error) {
 	return &itemizer, &frequency, numTransactions, nil
 }
 
-func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) ([]itemsetWithCount, error) {
-	file, err := os.Open(path)
+func generateFrequentItemsets(itemsReader ItemsReader, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) ([]itemsetWithCount, error) {
+	file, err := itemsReader()
 	if err != nil {
 		return nil, err
 	}
@@ -187,6 +189,33 @@ func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemize
 }
 
 func MineAssociationRules(args Arguments, log Logger) error {
+	if err := args.Validate(); err != nil {
+		return err
+	}
+
+	args_v2 := ArgumentsV2{
+		ItemsReader: func() (io.ReadCloser, error) {
+			return os.Open(args.Input)
+		},
+		RulesWriter: func() (io.WriteCloser, error) {
+			log.Printf("Writing rules to '%s'...", args.Output)
+			return os.Create(args.Output)
+		},
+		MinSupport:    args.MinSupport,
+		MinConfidence: args.MinConfidence,
+		MinLift:       args.MinLift,
+	}
+	if args.ItemsetsPath != "" {
+		args_v2.ItemsetsWriter = func() (io.WriteCloser, error) {
+			log.Printf("Writing itemsets to '%s'\n", args.ItemsetsPath)
+			return os.Create(args.ItemsetsPath)
+		}
+	}
+
+	return MineAssociationRulesV2(args_v2, log)
+}
+
+func MineAssociationRulesV2(args ArgumentsV2, log Logger) error {
 	log.Println("Association Rule Mining - in Go via FPGrowth")
 
 	if err := args.Validate(); err != nil {
@@ -195,7 +224,7 @@ func MineAssociationRules(args Arguments, log Logger) error {
 
 	log.Println("First pass, counting Item frequencies...")
 	start := time.Now()
-	itemizer, frequency, numTransactions, err := countItems(args.Input)
+	itemizer, frequency, numTransactions, err := countItems(args.ItemsReader)
 	if err != nil {
 		return err
 	}
@@ -204,17 +233,16 @@ func MineAssociationRules(args Arguments, log Logger) error {
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
 
-	itemsWithCount, err := generateFrequentItemsets(args.Input, args.MinSupport, itemizer, frequency, numTransactions)
+	itemsWithCount, err := generateFrequentItemsets(args.ItemsReader, args.MinSupport, itemizer, frequency, numTransactions)
 	if err != nil {
 		return err
 	}
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
-	if len(args.ItemsetsPath) > 0 {
-		log.Printf("Writing itemsets to '%s'\n", args.ItemsetsPath)
+	if args.ItemsetsWriter != nil {
 		start := time.Now()
-		writeItemsets(itemsWithCount, args.ItemsetsPath, itemizer, numTransactions)
+		writeItemsets(itemsWithCount, args.ItemsetsWriter, itemizer, numTransactions)
 		log.Printf("Wrote %d itemsets in %s", len(itemsWithCount), time.Since(start))
 	}
 
@@ -225,8 +253,7 @@ func MineAssociationRules(args Arguments, log Logger) error {
 	log.Printf("Generated %d association rules in %s", numRules, time.Since(start))
 
 	start = time.Now()
-	log.Printf("Writing rules to '%s'...", args.Output)
-	writeRules(rules, args.Output, itemizer)
+	writeRules(rules, args.RulesWriter, itemizer)
 	log.Printf("Wrote %d rules in %s", numRules, time.Since(start))
 
 	return nil

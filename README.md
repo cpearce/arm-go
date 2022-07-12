@@ -4,7 +4,8 @@ along with association rule generation, in Go.
 
 Original code by Chris Pearce, https://github.com/cpearce/arm-go.
 
-Modified by Nokia into an importable package.
+Modified by Nokia into an importable package and to support custom
+reader and writer.
 
 This finds relationships of the form "people who buy X also buy Y",
 and also determines the strengths (confidence, lift, support) of those
@@ -57,5 +58,38 @@ func main() {
     if err := arm.MineAssociationRules(args, log.Default()); err != nil {
         panic(err)
     }
+}
+```
+
+Or by using custom readers and writers. For example:
+```go
+package main
+
+import (
+	"io"
+	"log"
+	"os"
+
+	"github.com/nokia/arm-go"
+)
+
+func main() {
+	args := arm.ArgumentsV2{
+		ItemsReader: func() (io.ReadCloser, error) {
+			return os.Open("datasets/kosarak.csv")
+		},
+		RulesWriter: func() (io.WriteCloser, error) {
+			return os.Create("rules")
+		},
+		ItemsetsWriter: func() (io.WriteCloser, error) {
+			return os.Create("itemsets")
+		},
+		MinSupport:    0.05,
+		MinConfidence: 0.05,
+		MinLift:       1.5,
+	}
+	if err := arm.MineAssociationRulesV2(args, log.Default()); err != nil {
+		panic(err)
+	}
 }
 ```

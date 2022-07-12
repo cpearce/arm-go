@@ -13,10 +13,13 @@
 // limitations under the License.
 //
 // Modified by Nokia into an importable package.
+// Modified by Nokia to support custom reader and writer
 
 package arm
 
 import (
+	"io"
+	"os"
 	"testing"
 )
 
@@ -114,7 +117,9 @@ func TestFPGrowth(t *testing.T) {
 		itemsetWithCount{[]Item{55}, 65412},
 	}
 
-	input := "datasets/kosarak.csv"
+	input := func() (io.ReadCloser, error) {
+		return os.Open("datasets/kosarak.csv")
+	}
 	itemizer, frequency, numTransactions, _ := countItems(input)
 	itemsets, _ := generateFrequentItemsets(input, 0.05, itemizer, frequency, numTransactions)
 
