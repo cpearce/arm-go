@@ -31,7 +31,13 @@ type Rule struct {
 }
 
 // NewRule creates a new rule.
-func NewRule(antecedent []Item, consequent []Item, support float64, confidence float64, lift float64) Rule {
+func NewRule(
+	antecedent []Item,
+	consequent []Item,
+	support float64,
+	confidence float64,
+	lift float64,
+) Rule {
 	return Rule{
 		Antecedent: antecedent,
 		Consequent: consequent,
@@ -69,7 +75,10 @@ func newItemsetSupportLookup() *itemsetSupportLookup {
 }
 
 func (isl *itemsetSupportLookup) insert(itemset []Item, support float64) {
-	isl.itemsets = append(isl.itemsets, itemsetWithSupport{itemset: itemset, support: support})
+	isl.itemsets = append(
+		isl.itemsets,
+		itemsetWithSupport{itemset: itemset, support: support},
+	)
 }
 
 func (isl *itemsetSupportLookup) sort() {
@@ -86,7 +95,10 @@ func (isl *itemsetSupportLookup) lookup(itemset []Item) float64 {
 	return isl.itemsets[idx].support
 }
 
-func createSupportLookup(itemsets []itemsetWithCount, numTransactions int) *itemsetSupportLookup {
+func createSupportLookup(
+	itemsets []itemsetWithCount,
+	numTransactions int,
+) *itemsetSupportLookup {
 	isl := newItemsetSupportLookup()
 	f := float64(numTransactions)
 	for _, is := range itemsets {
@@ -97,7 +109,13 @@ func createSupportLookup(itemsets []itemsetWithCount, numTransactions int) *item
 	return isl
 }
 
-func makeStats(a []Item, c []Item, ac []Item, acSup float64, supportLookup *itemsetSupportLookup) (float64, float64) {
+func makeStats(
+	a []Item,
+	c []Item,
+	ac []Item,
+	acSup float64,
+	supportLookup *itemsetSupportLookup,
+) (float64, float64) {
 	aSup := supportLookup.lookup(a)
 	confidence := acSup / aSup
 	cSup := supportLookup.lookup(c)
@@ -144,7 +162,12 @@ func prefixMatchLen(a []Item, b []Item) int {
 	return len(a)
 }
 
-func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfidence float64, minLift float64) [][]Rule {
+func generateRules(
+	itemsets []itemsetWithCount,
+	numTransactions int,
+	minConfidence float64,
+	minLift float64,
+) [][]Rule {
 	// Output rules are stored in a slice of slices. As we generate rules, we
 	// store them in a slice with capacity `chunkSize`. When the slice fills up,
 	// we append it to the output set. If we instead stuck all the rules in a
@@ -161,9 +184,16 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 		support := float64(itemset.count) / float64(numTransactions)
 		if time.Since(lastFeedback).Seconds() > 20 {
 			lastFeedback = time.Now()
-			percentComplete := int(float64(index)/float64(countRules(output)+len(rules))*100 + 0.5)
-			log.Printf("Progress: %d of %d itemsets processed (%d%%), generated %d rules so far",
-				index, len(itemsets), percentComplete, len(rules))
+			percentComplete := int(
+				float64(index)/float64(countRules(output)+len(rules))*100 + 0.5,
+			)
+			log.Printf(
+				"Progress: %d of %d itemsets processed (%d%%), generated %d rules so far",
+				index,
+				len(itemsets),
+				percentComplete,
+				len(rules),
+			)
 		}
 		if len(itemset.itemset) < 2 {
 			continue
@@ -173,12 +203,21 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 		for _, item := range itemset.itemset {
 			consequent := []Item{item}
 			antecedent := setMinus(itemset.itemset, consequent)
-			confidence, lift := makeStats(antecedent, consequent, itemset.itemset, support, itemsetSupport)
+			confidence, lift := makeStats(
+				antecedent,
+				consequent,
+				itemset.itemset,
+				support,
+				itemsetSupport,
+			)
 			if confidence < minConfidence {
 				continue
 			}
 			if lift >= minLift {
-				rules = append(rules, NewRule(antecedent, consequent, support, confidence, lift))
+				rules = append(
+					rules,
+					NewRule(antecedent, consequent, support, confidence, lift),
+				)
 				if len(rules) == chunkSize {
 					output = append(output, rules)
 					rules = make([]Rule, 0, chunkSize)
@@ -210,13 +249,28 @@ func generateRules(itemsets []itemsetWithCount, numTransactions int, minConfiden
 					consequent := union(c1, candidates[idx2])
 					antecedent := setMinus(itemset.itemset, consequent)
 
-					confidence, lift := makeStats(antecedent, consequent, itemset.itemset, support, itemsetSupport)
+					confidence, lift := makeStats(
+						antecedent,
+						consequent,
+						itemset.itemset,
+						support,
+						itemsetSupport,
+					)
 					if confidence < minConfidence {
 						continue
 					}
 					nextGen = append(nextGen, consequent)
 					if lift >= minLift {
-						rules = append(rules, NewRule(antecedent, consequent, support, confidence, lift))
+						rules = append(
+							rules,
+							NewRule(
+								antecedent,
+								consequent,
+								support,
+								confidence,
+								lift,
+							),
+						)
 						if len(rules) == chunkSize {
 							output = append(output, rules)
 							rules = make([]Rule, 0, chunkSize)

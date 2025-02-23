@@ -36,7 +36,12 @@ func check(e error) {
 	}
 }
 
-func writeItemsets(itemsets []itemsetWithCount, outputPath string, itemizer *Itemizer, numTransactions int) {
+func writeItemsets(
+	itemsets []itemsetWithCount,
+	outputPath string,
+	itemizer *Itemizer,
+	numTransactions int,
+) {
 	output, err := os.Create(outputPath)
 	check(err)
 	w := bufio.NewWriter(output)
@@ -80,7 +85,13 @@ func writeRules(rules [][]Rule, outputPath string, itemizer *Itemizer) {
 				first = false
 				fmt.Fprint(w, itemizer.toStr(item))
 			}
-			fmt.Fprintf(w, ",%f,%f,%f\n", rule.Confidence, rule.Lift, rule.Support)
+			fmt.Fprintf(
+				w,
+				",%f,%f,%f\n",
+				rule.Confidence,
+				rule.Lift,
+				rule.Support,
+			)
 		}
 	}
 	w.Flush()
@@ -116,7 +127,13 @@ func countItems(path string) (*Itemizer, *itemCount, int) {
 	return &itemizer, &frequency, numTransactions
 }
 
-func generateFrequentItemsets(path string, minSupport float64, itemizer *Itemizer, frequency *itemCount, numTransactions int) []itemsetWithCount {
+func generateFrequentItemsets(
+	path string,
+	minSupport float64,
+	itemizer *Itemizer,
+	frequency *itemCount,
+	numTransactions int,
+) []itemsetWithCount {
 	file, err := os.Open(path)
 	check(err)
 	defer file.Close()
@@ -167,22 +184,46 @@ func main() {
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
 
-	itemsWithCount := generateFrequentItemsets(args.input, args.minSupport, itemizer, frequency, numTransactions)
+	itemsWithCount := generateFrequentItemsets(
+		args.input,
+		args.minSupport,
+		itemizer,
+		frequency,
+		numTransactions,
+	)
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
 		len(itemsWithCount), time.Since(start))
 
 	if len(args.itemsetsPath) > 0 {
 		log.Printf("Writing itemsets to '%s'\n", args.itemsetsPath)
 		start := time.Now()
-		writeItemsets(itemsWithCount, args.itemsetsPath, itemizer, numTransactions)
-		log.Printf("Wrote %d itemsets in %s", len(itemsWithCount), time.Since(start))
+		writeItemsets(
+			itemsWithCount,
+			args.itemsetsPath,
+			itemizer,
+			numTransactions,
+		)
+		log.Printf(
+			"Wrote %d itemsets in %s",
+			len(itemsWithCount),
+			time.Since(start),
+		)
 	}
 
 	log.Println("Generating association rules...")
 	start = time.Now()
-	rules := generateRules(itemsWithCount, numTransactions, args.minConfidence, args.minLift)
+	rules := generateRules(
+		itemsWithCount,
+		numTransactions,
+		args.minConfidence,
+		args.minLift,
+	)
 	numRules := countRules(rules)
-	log.Printf("Generated %d association rules in %s", numRules, time.Since(start))
+	log.Printf(
+		"Generated %d association rules in %s",
+		numRules,
+		time.Since(start),
+	)
 
 	start = time.Now()
 	log.Printf("Writing rules to '%s'...", args.output)
