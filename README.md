@@ -1,5 +1,6 @@
 # arm-go
-[![Build Status](https://travis-ci.org/cpearce/arm-go.svg?branch=master)](https://travis-ci.org/cpearce/arm-go)
+
+![Build Status](https://github.com/cpearce/arm-go/actions/workflows/go.yml/badge.svg)
 
 An implementation of FPGrowth frequent pattern generation algorithm,
 along with association rule generation, in Go.
