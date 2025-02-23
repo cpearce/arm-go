@@ -114,7 +114,13 @@ func TestFPGrowth(t *testing.T) {
 
 	input := "datasets/kosarak.csv"
 	itemizer, frequency, numTransactions := countItems(input)
-	itemsets := generateFrequentItemsets(input, 0.05, itemizer, frequency, numTransactions)
+	itemsets := generateFrequentItemsets(
+		input,
+		0.05,
+		itemizer,
+		frequency,
+		numTransactions,
+	)
 
 	if len(itemsets) != len(expectedItemsets) {
 		t.Error("Result=")
@@ -139,7 +145,16 @@ func TestSetMinus(t *testing.T) {
 	for _, test := range testCases {
 		c := setMinus(test.a, test.b)
 		if !itemSliceEquals(c, test.c) {
-			t.Error("Fail: ", test.a, " minus ", test.b, " should be ", test.c, " got ", c)
+			t.Error(
+				"Fail: ",
+				test.a,
+				" minus ",
+				test.b,
+				" should be ",
+				test.c,
+				" got ",
+				c,
+			)
 		}
 	}
 }

@@ -65,7 +65,9 @@ func parseArgsOrDie() arguments {
 		case "--input":
 			{
 				if i+1 > len(args) {
-					fmt.Println("Expected --input to be followed by input CSV path.")
+					fmt.Println(
+						"Expected --input to be followed by input CSV path.",
+					)
 					os.Exit(-1)
 				}
 				result.input = args[i+1]
@@ -74,7 +76,9 @@ func parseArgsOrDie() arguments {
 		case "--output":
 			{
 				if i+1 > len(args) {
-					fmt.Println("Expected --output to be followed by output rule path.")
+					fmt.Println(
+						"Expected --output to be followed by output rule path.",
+					)
 					os.Exit(-1)
 				}
 				result.output = args[i+1]
@@ -83,7 +87,9 @@ func parseArgsOrDie() arguments {
 		case "--itemsets":
 			{
 				if i+1 > len(args) {
-					fmt.Println("Expected --itemsets to be followed by output itemsets path.")
+					fmt.Println(
+						"Expected --itemsets to be followed by output itemsets path.",
+					)
 					os.Exit(-1)
 				}
 				result.itemsetsPath = args[i+1]

@@ -21,7 +21,8 @@ import (
 )
 
 func ruleEquals(a *Rule, b *Rule) bool {
-	return itemSliceEquals(a.Antecedent, b.Antecedent) && itemSliceEquals(a.Consequent, b.Consequent)
+	return itemSliceEquals(a.Antecedent, b.Antecedent) &&
+		itemSliceEquals(a.Consequent, b.Consequent)
 }
 
 func TestWithout(t *testing.T) {
