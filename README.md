@@ -16,9 +16,13 @@ see Chapter 5 of Introduction to Data Mining, Kumar et al:
 To build, [download and install Go](https://golang.org/dl/) and clone this
 repository to $GO_PATH/src/arm-go, and build with:
 ```
-  $ go build arm-go
+  $ go build
 ```
+
+This creates the binary arm-go.
+
 You can then run from the command line, for example:
+
 ```
   $ ./arm-go --input datasets/kosarak.csv \
              --output rules \
@@ -27,7 +31,9 @@ You can then run from the command line, for example:
              --min-confidence 0.05 \
              --min-lift 1.5
 ```
+
 To run unit tests:
+
 ```
   $ go test
 ```
