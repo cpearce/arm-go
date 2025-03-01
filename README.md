@@ -24,12 +24,12 @@ This creates the binary arm-go.
 You can then run from the command line, for example:
 
 ```
-  $ ./arm-go --input datasets/kosarak.csv \
-             --output rules \
-             --itemsets itemsets \
-             --min-support 0.05 \
-             --min-confidence 0.05 \
-             --min-lift 1.5
+go build && ./arm-go --input datasets/kosarak.csv \
+    --output rules.csv \
+    --itemsets itemsets.csv \
+    --min-support 0.05 \
+    --min-confidence 0.05 \
+    --min-lift 1.5
 ```
 
 To run unit tests:
