@@ -1,3 +1,27 @@
+// Arm generates frequent itemsets and association rules.
+//
+// Example usage:
+//
+//	arm \
+//	  --input datasets/kosarak.csv \
+//	  --output rules.csv \
+//	  --itemsets itemsets.csv \
+//	  --min-support 0.05 \
+//	  --min-confidence 0.05 \
+//	  --min-lift 1.5
+//
+// Command line flags:
+//
+//   - `input`: path to CSV file containing transactions to analyze. There are some
+//     examples in the datasets directory.
+//   - `output`: path to file to write the output rules to. Rules are written in CSV
+//     format with a header row explaining columns.
+//   - `itemsets`: optional path to CSV file to write the generated frequent itemsets
+//     to. If specified the large itemsets are written to this file.
+//   - `min-support`: minimum support above which itemsets are considered large, and
+//     used for rule generation.
+//   - `min-confidence`: minimum confidence for rule generation.
+//   - `min-lift`: minimum lift for rule generation.
 package main
 
 import (

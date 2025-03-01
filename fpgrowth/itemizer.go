@@ -33,6 +33,9 @@ func (ic *itemCount) get(item Item) int {
 }
 
 // Itemizer converts between a string to an Item type, and vice versa.
+// Allows you to ingest a CSV of human readable strings, convert to a more
+// efficient representation for rule/itemset generation, and only convert back
+// to human readable strings when you come to output the itemsets and rules.
 type Itemizer struct {
 	strToItem map[string]Item
 	itemToStr map[Item]string
@@ -50,7 +53,8 @@ func (it *Itemizer) Itemize(values []string) []Item {
 	return items[:j]
 }
 
-func (it *Itemizer) toStr(item Item) string {
+// ToStor converts an Item back to origianl string representation.
+func (it *Itemizer) ToStr(item Item) string {
 	s, found := it.itemToStr[item]
 	if !found {
 		panic("Failed to convert item to string!")
