@@ -161,6 +161,14 @@ func prefixMatchLen(a []Item, b []Item) int {
 	return len(a)
 }
 
+func countRules(rules [][]Rule) int {
+	n := 0
+	for _, chunk := range rules {
+		n += len(chunk)
+	}
+	return n
+}
+
 func generateRules(
 	itemsets []ItemsetWithCount,
 	numTransactions int,
