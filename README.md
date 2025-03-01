@@ -1,6 +1,7 @@
 # arm-go
 
 ![Build Status](https://github.com/cpearce/arm-go/actions/workflows/go.yml/badge.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/cpearce/arm-go.svg)](https://pkg.go.dev/github.com/cpearce/arm-go)
 
 An implementation of FPGrowth frequent pattern generation algorithm,
 along with association rule generation, in Go.
@@ -54,7 +55,7 @@ used for rule generation.
 
 ## The `fpgrowth` package
 
-The underlying implementation can be used as a library as well. See the go docs
+The underlying implementation can be used as a library as well. See the [fpgrowth go package docs](https://pkg.go.dev/github.com/cpearce/arm-go/fpgrowth)
 for more information.
 
 ## Development
