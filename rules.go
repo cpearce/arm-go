@@ -96,7 +96,7 @@ func (isl *itemsetSupportLookup) lookup(itemset []Item) float64 {
 }
 
 func createSupportLookup(
-	itemsets []itemsetWithCount,
+	itemsets []ItemsetWithCount,
 	numTransactions int,
 ) *itemsetSupportLookup {
 	isl := newItemsetSupportLookup()
@@ -112,7 +112,6 @@ func createSupportLookup(
 func makeStats(
 	a []Item,
 	c []Item,
-	ac []Item,
 	acSup float64,
 	supportLookup *itemsetSupportLookup,
 ) (float64, float64) {
@@ -163,7 +162,7 @@ func prefixMatchLen(a []Item, b []Item) int {
 }
 
 func generateRules(
-	itemsets []itemsetWithCount,
+	itemsets []ItemsetWithCount,
 	numTransactions int,
 	minConfidence float64,
 	minLift float64,
@@ -206,7 +205,6 @@ func generateRules(
 			confidence, lift := makeStats(
 				antecedent,
 				consequent,
-				itemset.itemset,
 				support,
 				itemsetSupport,
 			)
@@ -252,7 +250,6 @@ func generateRules(
 					confidence, lift := makeStats(
 						antecedent,
 						consequent,
-						itemset.itemset,
 						support,
 						itemsetSupport,
 					)

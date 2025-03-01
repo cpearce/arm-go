@@ -37,7 +37,7 @@ func check(e error) {
 }
 
 func writeItemsets(
-	itemsets []itemsetWithCount,
+	itemsets []ItemsetWithCount,
 	outputPath string,
 	itemizer *Itemizer,
 	numTransactions int,
@@ -61,38 +61,32 @@ func writeItemsets(
 	w.Flush()
 }
 
-func writeRules(rules [][]Rule, outputPath string, itemizer *Itemizer) {
+func writeRules(rules []Rule, outputPath string, itemizer *Itemizer) {
 	output, err := os.Create(outputPath)
 	check(err)
 	w := bufio.NewWriter(output)
 	fmt.Fprintln(w, "Antecedent => Consequent,Confidence,Lift,Support")
-	for _, chunk := range rules {
-		for _, rule := range chunk {
-			first := true
-			for _, item := range rule.Antecedent {
-				if !first {
-					fmt.Fprintf(w, " ")
-				}
-				first = false
-				fmt.Fprint(w, itemizer.toStr(item))
+	for _, rule := range rules {
+		for i, item := range rule.Antecedent {
+			if i != 0 {
+				fmt.Fprintf(w, " ")
 			}
-			fmt.Fprint(w, " => ")
-			first = true
-			for _, item := range rule.Consequent {
-				if !first {
-					fmt.Fprintf(w, " ")
-				}
-				first = false
-				fmt.Fprint(w, itemizer.toStr(item))
-			}
-			fmt.Fprintf(
-				w,
-				",%f,%f,%f\n",
-				rule.Confidence,
-				rule.Lift,
-				rule.Support,
-			)
+			fmt.Fprint(w, itemizer.toStr(item))
 		}
+		fmt.Fprint(w, " => ")
+		for i, item := range rule.Consequent {
+			if i != 0 {
+				fmt.Fprintf(w, " ")
+			}
+			fmt.Fprint(w, itemizer.toStr(item))
+		}
+		fmt.Fprintf(
+			w,
+			",%f,%f,%f\n",
+			rule.Confidence,
+			rule.Lift,
+			rule.Support,
+		)
 	}
 	w.Flush()
 }
@@ -133,7 +127,7 @@ func generateFrequentItemsets(
 	itemizer *Itemizer,
 	frequency *itemCount,
 	numTransactions int,
-) []itemsetWithCount {
+) []ItemsetWithCount {
 	file, err := os.Open(path)
 	check(err)
 	defer file.Close()
@@ -168,6 +162,80 @@ func generateFrequentItemsets(
 	return fpGrowth(tree, make([]Item, 0), minCount)
 }
 
+type FpgrowthCtx struct {
+	inputCsvPath    string
+	itemizer        Itemizer
+	frequency       itemCount
+	numTransactions int
+}
+
+func Init(inputCsvPath string) FpgrowthCtx {
+	itemizer, frequency, numTransactions := countItems(inputCsvPath)
+	return FpgrowthCtx{
+		inputCsvPath:    inputCsvPath,
+		itemizer:        *itemizer,
+		frequency:       *frequency,
+		numTransactions: numTransactions,
+	}
+}
+
+type GeneratedItemsets []ItemsetWithCount
+
+func (fpgctx FpgrowthCtx) GenerateItemsets(
+	minSupport float64,
+) GeneratedItemsets {
+	return generateFrequentItemsets(
+		fpgctx.inputCsvPath,
+		minSupport,
+		&fpgctx.itemizer,
+		&fpgctx.frequency,
+		fpgctx.numTransactions,
+	)
+}
+
+func (fpgctx FpgrowthCtx) WriteItemsets(
+	itemsets GeneratedItemsets,
+	filePath string,
+) {
+	writeItemsets(
+		itemsets,
+		filePath,
+		&fpgctx.itemizer,
+		fpgctx.numTransactions,
+	)
+}
+
+func flatten(rules2d [][]Rule) []Rule {
+	n := 0
+	for _, r := range rules2d {
+		n += len(r)
+	}
+	rules := make([]Rule, n)
+	for _, r := range rules2d {
+		rules = append(rules, r...)
+	}
+	return rules
+}
+
+func (fpctx FpgrowthCtx) GenerateRules(
+	itemsets GeneratedItemsets,
+	minConfidence float64,
+	minLift float64,
+) []Rule {
+	// To avoid expensive resizes when generating an unknown number of rules,
+	// generateRules outputs a slice of slices. So merge them together into a
+	// single slice to make things cleaner.
+	rules2d := generateRules(itemsets, fpctx.numTransactions, minConfidence, minLift)
+	return flatten(rules2d)
+}
+
+func (fpctx FpgrowthCtx) WriteRules(
+	outputPath string,
+	rules []Rule,
+) {
+	writeRules(rules, outputPath, &fpctx.itemizer)
+}
+
 func main() {
 	log.Println("Association Rule Mining - in Go via FPGrowth")
 
@@ -178,55 +246,41 @@ func main() {
 
 	log.Println("First pass, counting Item frequencies...")
 	start := time.Now()
-	itemizer, frequency, numTransactions := countItems(args.input)
+	ctx := Init(args.input)
 	log.Printf("First pass finished in %s", time.Since(start))
 
 	log.Println("Generating frequent itemsets via fpGrowth")
 	start = time.Now()
-
-	itemsWithCount := generateFrequentItemsets(
-		args.input,
-		args.minSupport,
-		itemizer,
-		frequency,
-		numTransactions,
-	)
+	itemsets := ctx.GenerateItemsets(args.minSupport)
 	log.Printf("fpGrowth generated %d frequent patterns in %s",
-		len(itemsWithCount), time.Since(start))
+		len(itemsets), time.Since(start))
 
 	if len(args.itemsetsPath) > 0 {
 		log.Printf("Writing itemsets to '%s'\n", args.itemsetsPath)
 		start := time.Now()
-		writeItemsets(
-			itemsWithCount,
-			args.itemsetsPath,
-			itemizer,
-			numTransactions,
-		)
+		ctx.WriteItemsets(itemsets, args.itemsetsPath)
 		log.Printf(
 			"Wrote %d itemsets in %s",
-			len(itemsWithCount),
+			len(itemsets),
 			time.Since(start),
 		)
 	}
 
 	log.Println("Generating association rules...")
 	start = time.Now()
-	rules := generateRules(
-		itemsWithCount,
-		numTransactions,
+	rules := ctx.GenerateRules(
+		itemsets,
 		args.minConfidence,
 		args.minLift,
 	)
-	numRules := countRules(rules)
 	log.Printf(
 		"Generated %d association rules in %s",
-		numRules,
+		len(rules),
 		time.Since(start),
 	)
 
 	start = time.Now()
 	log.Printf("Writing rules to '%s'...", args.output)
-	writeRules(rules, args.output, itemizer)
-	log.Printf("Wrote %d rules in %s", numRules, time.Since(start))
+	ctx.WriteRules(args.output, rules)
+	log.Printf("Wrote %d rules in %s", len(rules), time.Since(start))
 }
