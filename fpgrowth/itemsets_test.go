@@ -52,8 +52,8 @@ func TestIntersection(t *testing.T) {
 
 func containsIWC(expected []ItemsetWithCount, observed ItemsetWithCount) bool {
 	for _, iws := range expected {
-		if itemSliceEquals(observed.itemset, iws.itemset) {
-			return observed.count == iws.count
+		if itemSliceEquals(observed.Itemset, iws.Itemset) {
+			return observed.Count == iws.Count
 		}
 	}
 	return false

@@ -9,8 +9,11 @@ import (
 // Rule represents an antecedent implies consequent rule, and stores its
 // support, confidence, and lift.
 type Rule struct {
+	// Antecedent is the LHS of the association rule.
 	Antecedent []Item
+	// Consequent is the RHS of the association rule.
 	Consequent []Item
+	// Support measures hoc
 	Support    float64
 	Confidence float64
 	Lift       float64
@@ -88,7 +91,7 @@ func createSupportLookup(
 	isl := newItemsetSupportLookup()
 	f := float64(numTransactions)
 	for _, is := range itemsets {
-		isl.insert(is.itemset, float64(is.count)/f)
+		isl.insert(is.Itemset, float64(is.Count)/f)
 	}
 	isl.sort()
 
@@ -174,7 +177,7 @@ func generateRules(
 	lastFeedback := time.Now()
 
 	for index, itemset := range itemsets {
-		support := float64(itemset.count) / float64(numTransactions)
+		support := float64(itemset.Count) / float64(numTransactions)
 		if time.Since(lastFeedback).Seconds() > 20 {
 			lastFeedback = time.Now()
 			percentComplete := int(
@@ -188,14 +191,14 @@ func generateRules(
 				len(rules),
 			)
 		}
-		if len(itemset.itemset) < 2 {
+		if len(itemset.Itemset) < 2 {
 			continue
 		}
 		// First generation is all possible rules with consequents of size 1.
 		candidates := make([][]Item, 0)
-		for _, item := range itemset.itemset {
+		for _, item := range itemset.Itemset {
 			consequent := []Item{item}
-			antecedent := setMinus(itemset.itemset, consequent)
+			antecedent := setMinus(itemset.Itemset, consequent)
 			confidence, lift := makeStats(
 				antecedent,
 				consequent,
@@ -221,7 +224,7 @@ func generateRules(
 
 		// Create subsequent generations by merging consequents which have size-1 items
 		// in common in the consequent.
-		k := len(itemset.itemset) // size of frequent itemset
+		k := len(itemset.Itemset) // size of frequent itemset
 		for len(candidates) > 0 && len(candidates[0])+1 < k {
 			nextGen := make([][]Item, 0)
 			for idx1, c1 := range candidates {
@@ -239,7 +242,7 @@ func generateRules(
 					}
 
 					consequent := union(c1, candidates[idx2])
-					antecedent := setMinus(itemset.itemset, consequent)
+					antecedent := setMinus(itemset.Itemset, consequent)
 
 					confidence, lift := makeStats(
 						antecedent,

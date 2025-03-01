@@ -60,9 +60,10 @@ func (tree *fpTree) Insert(transaction []Item, count int) {
 	}
 }
 
+// ItemsetWithCount wraps an itemset with its count.
 type ItemsetWithCount struct {
-	itemset []Item
-	count   int
+	Itemset []Item
+	Count   int
 }
 
 func reverse(a []Item) {
@@ -120,8 +121,8 @@ func fpGrowth(tree *fpTree, itemset []Item, minCount int) []ItemsetWithCount {
 		}
 		path := appendSorted(itemset, item)
 		itemsets = append(itemsets, ItemsetWithCount{
-			itemset: path,
-			count:   conditionalTree.root.count,
+			Itemset: path,
+			Count:   conditionalTree.root.count,
 		})
 		x := fpGrowth(conditionalTree, path, minCount)
 		itemsets = append(itemsets, x...)
