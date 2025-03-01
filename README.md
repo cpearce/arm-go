@@ -14,26 +14,20 @@ see Chapter 5 of Introduction to Data Mining, Kumar et al:
 [Association Analysis: Basic Concepts and Algorithms](https://www-users.cs.umn.edu/~kumar001/dmbook/ch5_association_analysis.pdf).
 
 To build, [download and install Go](https://golang.org/dl/) and clone this
-repository to $GO_PATH/src/arm-go, and build with:
-```
-  $ go build
-```
-
-This creates the binary arm-go.
-
-You can then run from the command line, for example:
+repository and run like:
 
 ```
-go build && ./arm-go --input datasets/kosarak.csv \
-    --output rules.csv \
-    --itemsets itemsets.csv \
-    --min-support 0.05 \
-    --min-confidence 0.05 \
-    --min-lift 1.5
+go run github.com/cpearce/arm-go \
+  --input datasets/kosarak.csv \
+  --output rules.csv \
+  --itemsets itemsets.csv \
+  --min-support 0.05 \
+  --min-confidence 0.05 \
+  --min-lift 1.5
 ```
 
 To run unit tests:
 
 ```
-  $ go test
+  $ go test ./...
 ```

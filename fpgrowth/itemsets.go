@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package fpgrowth
 
 func min(x, y int) int {
 	if x < y {
